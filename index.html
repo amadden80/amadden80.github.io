@@ -12,7 +12,7 @@
 
     function timeBlink()
     {
-     var nextBlink = Math.random()*5000+1000;
+     var nextBlink = Math.random()*50+100;
      var t=setTimeout("blink()", nextBlink);
      var o=setTimeout("unblink()", Math.random()*100+50+nextBlink);
     }
