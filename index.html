@@ -1,16 +1,19 @@
 <!DOCTYPE HTML>
-<!-- <link rel='stylesheet' type = 'text/css' href = 'amadden80Styles.css'> -->
-
+<link rel='stylesheet' type = 'text/css' href = 'amadden80Styles.css'>
+<link rel="icon" type="image/png" href="pageContent/images/Fav.png">
 <html>
 
 <head>
+  <meta charset="UTF-8">
+
   <title> Andrew Madden </title>
 
   <script type="text/javascript">
     var blinkCnt = 0;
-    function timeBlink()
+    var waittime = 1000;
+    function timeBlink(waittime)
     {
-     var nextBlink = Math.random()*50+100;
+     var nextBlink = Math.random()*waittime+1000;
      var t=setTimeout("blink()", nextBlink);
      var o=setTimeout("unblink()", Math.random()*100+50+nextBlink);
     }
@@ -22,7 +25,7 @@
     function unblink()
     {
       document.images['face'].src='pageContent/images/face.png'
-      if (blinkCnt < 5) timeBlink();
+      if (blinkCnt < 5) timeBlink(waittime * blinkCnt);
     }
   </script>
 
@@ -30,10 +33,9 @@
 </head>
 
 
-<body onload=timeBlink()>
+<body onload=timeBlink(1000)>
 
   <img src="pageContent/images/face.png" name="face" onMouseOver="document.images['face'].src='pageContent/images/ahh.png'" onMouseOut="document.images['face'].src='pageContent/images/face.png'" />
-
 
 </body>
 
