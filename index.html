@@ -4,11 +4,41 @@
 
 <head>
   <title> Andrew Madden </title>
+
+
+  <script type="text/javascript">
+
+    var blinkCnt = 0;
+
+    function timeBlink()
+    {
+     var nextBlink = Math.random()*5000+1000;
+     var t=setTimeout("blink()", nextBlink);
+     var o=setTimeout("unblink()", Math.random()*100+50+nextBlink);
+    }
+
+    function blink()
+    {
+      document.images['face'].src='pageContent/images/blink.png'
+      blinkCnt++;
+    }
+
+    function unblink()
+    {
+      document.images['face'].src='pageContent/images/face.png'
+      if (blinkCnt < 5) timeBlink();
+    }
+
+  </script>
+
+
 </head>
 
 <body>
 
   <img src = "pageContent/images/face.png" onmouseover="this.src = 'pageContent/images/ahh.png'" onmouseout="this.src = 'pageContent/images/face.png'" />
+  <img src="pageContent/images/face.png" name="face" onMouseOver="document.images['face'].src='pageContent/images/ahh.png'" onMouseOut="document.images['face'].src='pageContent/images/face.png'" />
+
 
 </body>
 
