@@ -1,42 +1,255 @@
-<!DOCTYPE HTML>
-<link rel='stylesheet' type = 'text/css' href = 'amadden80Styles.css'>
-<link rel="icon" type="image/png" href="pageContent/images/Fav.png">
-<html>
-
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--><html lang="en"> <!--<![endif]-->
 <head>
-  <meta charset="UTF-8">
 
-  <title> Andrew Madden </title>
+    <meta charset="utf-8">
+    <title>Andrew Madden</title>
+    <meta name="description" content="Andrew Madden Portfolio">
+    <meta name="author" content="Andrew Madden">
 
-  <script type="text/javascript">
-    var blinkCnt = 0;
-    var waittime = 1000;
-    function timeBlink(waittime)
-    {
-     var nextBlink = Math.random()*waittime+1000;
-     var t=setTimeout("blink()", nextBlink);
-     var o=setTimeout("unblink()", Math.random()*100+50+nextBlink);
-    }
-    function blink()
-    {
-      document.images['face'].src='pageContent/images/blink.png'
-      blinkCnt++;
-    }
-    function unblink()
-    {
-      document.images['face'].src='pageContent/images/face.png'
-      if (blinkCnt < 5) timeBlink(waittime * blinkCnt);
-    }
-  </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
+
+    <link rel="stylesheet" href="stylesheets/base.css">
+    <link rel="stylesheet" href="stylesheets/skeleton.css">
+    <link rel="stylesheet" href="stylesheets/layout.css">
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="shortcut icon" href="pageContent/images/Fav.png">
+
+    <script src="javascript/jquery-2.0.3.js"></script>
+    <script src="javascript/madden.js"></script>
 
 </head>
+<body>
 
 
-<body onload=timeBlink(1000)>
+    <div class="container">
 
-  <img src="pageContent/images/face.png" name="face" onMouseOver="document.images['face'].src='pageContent/images/ahh.png'" onMouseOut="document.images['face'].src='pageContent/images/face.png'" />
+        <div class='two columns'>
+            <img src="pageContent/images/face.png" id="ajm-face" />
+        </div>
+        <div class='row'></div>
+        
+        <div class="eight columns">
+            <h3 class="" >Andrew Madden</h3>
+            <ul class="square">
+                <li class="shadowable"><strong>Web-Developer: </strong>Full-Stack development with focus in Ruby-on-Rails and Javascript.</li>
+                <li class="shadowable"><strong>Audio Technologist: </strong>Audio signal processing in Matlab, C/C++, PureData, Max/MSP</li>
+                <li class="shadowable"><strong>Educator: </strong> Experience teaching college-level mathimatics, programming, digital signal theory, and web-development.  Currently a graduate-level instructor in New York University's Masters of Music Technology program.</li>
+            </ul>
+        </div>
+
+        <div class="three columns offset-by-two">
+            <ul id="contacts-links-documents">
+
+                <li class="shadowable"><strong>Contact: </strong>
+                    <ul class="shadowable square" >
+                        <li>
+                            <a href="mailto:amadden80@gmail.com">amadden80@gmail.com</a> 
+                        </li>
+                        <li>
+                            <a target="_blank" href="http://www.linkedin.com/pub/andrew-madden/15/397/81">Linked-In</a>
+                        </il>
+                        <li>
+                            <a target="_blank" href="http://www.github.com/amadden80">Github</a>
+                        </il>
+                        <li>
+                            <a target="_blank" href="http://www.twitter.com/polbepolbepoble">Twitter</a>
+                        </il>
+                    </ul>
+                </li>
+
+                <li class="shadowable"><strong>Documents: </strong>
+                    <ul class="shadowable square" >
+                        <li>
+                            <a target="_blank"href="AndrewMadden_MastersThesis.pdf">Resume</a>
+                        </li>
+                        <li>
+                            <a target="_blank"href="AndrewMadden_MastersThesis.pdf">Masters Thesis</a>
+                        </il>
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+
+
+
+        <div class='row'></div>
+
+        <section>
+            <h3 class="five columns shadowable area-label" id = "web_development-focus-label" data-focus="web_development-focus">
+                Websites
+            </h3>
+
+            <h3 class="five columns shadowable area-label" id = "videos-focus-label" data-focus="videos-focus">
+                Videos
+            </h3>
+
+            <h3 class="five columns shadowable area-label" id = "publications-focus-label" data-focus="publications-focus">
+                Publications
+            </h3>
+        </section>
+
+        <div class='row'></div>
+        <div class="sixteen columns">
+            <section id='focus-area'>
+
+
+
+            <!-- web_development -->
+              <div id='web_development-focus' class='focuses sixteen columns focus-area'>
+                
+                <div class="five columns square" id="websites-links">
+                    <h4>
+                        Stack
+                    </h4>
+                    <ul class="square">
+                      <li>Ruby on Rails</li>
+                      <li>Javascript</li>
+                      <li>HTML5/CSS3</li>
+                    </ul>
+                </div>
+
+                <div class="five columns square" id="websites-links">
+                    <h4>
+                        Work
+                    </h4>
+                    <ul class="square">
+                        <li>
+                            <a href="http://blings.herokuapp.com">Blings</a>
+                            </br>
+                            Stock Price Sonification
+                        </li>
+                        <li>
+                            <a href="http://virtualhaircut.herokuapp.com">Virtual Haircut</a>
+                            </br>
+                            Binaural Headphone Processing
+                        </li>
+                    </ul>
+                </div>
+
+
+              </div>
+              <!-- /web_development -->
+
+
+
+              <!-- Videos -->
+              <div id='videos-focus' class='focuses sixteen columns focus-area'>
+                     
+
+                <div class="five columns sub-label-stage">    
+                    <h4>
+                     Category
+                    </h4>
+                    <ul class="square">
+                        <li class="shadowable sub-area-label" data-focus="amp-rad-pat">
+                            Amp Radiation Patterns
+                        </li>
+                        <li class="shadowable sub-area-label" data-focus="3D_spatial_audio">
+                            Amp 3D & Spatial Audio
+                        </li>
+                        <li class="shadowable sub-area-label" data-focus="fun_audio">
+                            Fun
+                        </li>
+                    </ul>
+                </div>
+
+
+                <div class="four columns sub-area-stage" id="video-sub-area-stage">
+
+                    <div id="amp-rad-pat" class="sub-area three columns">
+                        <ul class="square">
+                            <li class="shadowable sub-sub-area-label square" data-video="sweep">
+                                Sweep
+                            </li>
+                            <li class="shadowable sub-sub-area-label" data-video="aur">
+                                Aurlization
+                            </li>
+                            <li class="shadowable sub-sub-area-label" data-video="sweetspot">
+                                Sweet-Spot
+                            </li>
+                            <li class="shadowable sub-sub-area-label" data-video="guitar">
+                                Guitar
+                            </li>
+                            <li class="shadowable sub-sub-area-label" data-video="drums">
+                                Drums
+                            </li>
+                        </ul>
+                     </div>
+
+                      <div id="3D_spatial_audio" class="sub-area">
+                        <ul class="three columns square">
+                            <li class="shadowable sub-sub-area-label square" data-video="panning">
+                              3D Panning Interface
+                            </li>
+                            <li class="shadowable sub-sub-area-label" data-video="pd_binaural">
+                              Binaural Processing
+                            </li>
+                        </ul>
+                     </div>
+
+                      <div id="fun_audio" class="sub-area">
+                        <ul class="three columns square">
+                            <li class="shadowable sub-sub-area-label square" data-video="thanks">
+                              Convolver's Thanks
+                            </li>
+                            <li class="shadowable sub-sub-area-label" data-video="art1">
+                               Fire
+                            </li>
+                        </ul>
+                     </div>
+
+                </div>
+
+                <div class="five columns sub-sub-focus-area" id="video-player-stage"></div>
+
+              </div>
+              <!-- /videos-focus -->
+
+
+              <!-- publications_focus -->
+              <div id='publications-focus' class='focuses fourteen columns focus-area'>
+                <h4>
+                    Conferences
+                </h4>
+                <ul class="square">
+                  <li>
+                    <h4>
+                        “Measuring Spectral Directivity of an Electric Guitar Amplifier.”
+                    </h4>
+                    <p>
+                        Dr. Agnieszka Roginska, Alex Case, Andrew Madden, and Jim Anderson. Audio Engineering Society: 132nd Convention – Budapest, 2012
+                    </p>
+                  </li>
+
+                  <li>
+                    <h4>
+                        “Multi-Touch Room Expansion Controller for Real-Time Acoustic Gestures.”
+                    </h4>
+                    <p>
+                        Andrew Madden, Pia Blumental, Areti Andreopoulou, Braxton Boren, Shengfeng Hu, Zhengshan Shi, Agnieszka Roginska. Audio Engineering Society: 131st Convention - New York, 2011
+
+                    </p>
+                  </li>
+ 
+                </ul>
+
+              </div>
+              <!-- /publications_focus -->
+
+            </section> 
+        </div>
+
+    </div><!-- container -->
+
+    <div id="hidden-bin" style="display: none;">
+    </div>
 
 </body>
-
 </html>
+

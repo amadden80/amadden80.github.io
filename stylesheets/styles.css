@@ -1,0 +1,95 @@
+
+/*Biggest*/
+@media only screen and (min-width: 1350px){
+        #ajm-face{
+        position: fixed;
+        left: -14em;
+        top: 0em;
+        width: 30em;
+        }
+}
+
+@media only screen and (min-width: 1200px) and (max-width: 1350px) {
+        #ajm-face{
+        position: fixed;
+        top: 0em;
+        left: -7.5em;
+        width: 15em;
+        }
+}
+
+/*Smallest*/
+@media only screen and (max-width: 1099.9px) {
+        #ajm-face{
+        position: relative;
+        top: 0em;
+        left: -2em;
+        }
+}
+
+
+
+.container{
+    padding-top: 3em;
+}
+
+
+
+body{
+    background-image: url("../pageContent/images/brillant.png");
+}
+
+
+.shadowable{
+    -webkit-transition: text-shadow 1s;
+    -moz-transition: text-shadow 1s;
+    -o-transition: text-shadow 1s;
+    transition: text-shadow 1s;
+}
+.shadowable:hover{
+    text-shadow:0.5px 1px 1.5px grey;
+} 
+
+
+.growable{
+    -webkit-transition: all 0.5s;
+    -moz-transition: all 0.5s;
+    -o-transition: all 0.5s;
+    transition: all 0.5s;
+
+}
+.growable:hover{
+    transform: scale(1.01);
+    -ms-transform: scale(1.01); 
+    -webkit-transform: scale(1.01); 
+} 
+
+
+#focus-team-member{
+}
+
+
+.area-label{
+    height:10%;
+}
+
+.focuses{
+}
+
+
+#focus-area{
+    min-height: 20em;
+}
+
+
+
+.video-link{
+    width:1em;
+    height:1em;
+    border:1px solid black;
+}
+
+
+a{
+    text-decoration: none;
+}
