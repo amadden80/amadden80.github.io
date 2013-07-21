@@ -69,6 +69,9 @@ function set_focus_area(e){
 // console.log(dev_e)
     var focus_label = e.target
     $(focus_label).siblings().removeClass('label-selected')
+    $(focus_label).siblings().addClass('label-non-selected')
+
+    $(focus_label).removeClass('label-non-selected')
     $(focus_label).addClass('label-selected')
     var focus = e.target.getAttribute('data-focus')
     $('#'+focus).show()
@@ -212,6 +215,22 @@ $(function(){
         add_video_node(video_title)
     })
 
+
+
+// $.each(['click', 'mouseenter'], function(index, value){
+
+//     $('#videos-focus-label').on(value, function(e){
+//         $('#down-left-arrow').show()
+//     })
+//     $('.sub-video-label').on(value, function(e){
+//         $('#down-left-arrow').remove()
+//         $('#left-right-arrow').fadeIn(100)
+//     })
+//     $('#sub-area-videos').on(value, function(e){
+//         $('#left-right-arrow').fadeOut(100)
+//     })
+
+// })
 
 
     $('#videos-focus-label').mouseenter(function(e){

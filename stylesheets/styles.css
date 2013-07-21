@@ -115,7 +115,11 @@ a{
 
 
 .label-selected{
-    text-decoration: underline;
+    /*text-decoration: underline;*/
+    color: black;
+}
+.label-non-selected{
+    color: lightgrey;
 }
 
 
