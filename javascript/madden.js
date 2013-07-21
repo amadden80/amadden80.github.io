@@ -186,10 +186,6 @@ $(function(){
     $('.sub-area-label').mouseenter(function(e){
         $('.sub-area').hide()
         set_focus_area(e)
-
-        if ($('#video-arrow')){
-            $('#video-arrow').attr('src', "pageContent/arrows/left_right_arrow.png")
-        }
     })
 
     $('.sub-sub-area-label').mouseenter(function(e){
