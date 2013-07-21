@@ -161,7 +161,17 @@ $(function(){
         $('#ajm-face').attr('src', 'pageContent/images/face.png')
     })
 
+    $('#ajm-face').on('click', function(){
+        $('#ajm-face').attr('src', 'pageContent/images/ahh.png')
+        setTimeout(function(){
+            $('#ajm-face').attr('src', 'pageContent/images/face.png')
+            }, 1000)
+    })
+
+
     timeBlink(1000)
+
+
 
     $('.area-label').mouseenter(function(e){
         $('.focus-area').hide()
@@ -173,13 +183,33 @@ $(function(){
         set_focus_area(e)
     })
 
-
     $('.sub-sub-area-label').mouseenter(function(e){
         $('.sub-sub-area').hide()
         var videl_label = e.target
         var video_title = e.target.getAttribute('data-video')
         add_video_node(video_title)
     })
+
+
+
+    $('.area-label').on('click', function(e){
+        $('.focus-area').hide()
+        set_focus_area(e)
+    })
+
+    $('.sub-area-label').on('click', function(e){
+        $('.sub-area').hide()
+        set_focus_area(e)
+    })
+
+    $('.sub-sub-area-label').on('click', function(e){
+        $('.sub-sub-area').hide()
+        var videl_label = e.target
+        var video_title = e.target.getAttribute('data-video')
+        add_video_node(video_title)
+    })
+
+
     
     $('.sub-sub-area').hide()  
     $('.sub-area').hide()  
