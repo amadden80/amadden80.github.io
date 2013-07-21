@@ -75,7 +75,7 @@ function set_focus_area(e){
 
 
 function prepare_video_node(title){
-    var vid_node = $("<iframe  class='sub-sub-area' id='video-player' frameborder='0' allowfullscreen></iframe>");
+    var vid_node = $("<iframe  class='sub-sub-area' width=100% id='video-player' frameborder='0' allowfullscreen></iframe>");
     var video_object = videos[title]
     vid_node.attr('src', video_object['src']);
     video_object.node = vid_node;
@@ -102,11 +102,15 @@ function set_window_style(){
     if ($(window).width() < 768){
 
         video_player_stage.empty()
-        
+
+        video_player_stage
+        video_player_stage_links = $('<ul class="square">')
+
         $.each(videos, function(index, value){
-            var vide_nod = $("<a target='_blank' href='" + value.src +"' > " + value.title + "<br></a>")    
-            video_player_stage.append(vide_nod)
+            var vide_nod = $("<li><a target='_blank' href='" + value.src +"' > " + value.title + "<br></a></li>")    
+            video_player_stage_links.append(vide_nod)
         })
+        video_player_stage.append(video_player_stage_links)
 
         $('.area-label').hide()
         $('.small-label').remove()
@@ -172,7 +176,6 @@ $(function(){
     timeBlink(1000)
 
 
-
     $('.area-label').mouseenter(function(e){
         $('.focus-area').hide()
         set_focus_area(e)
@@ -181,6 +184,10 @@ $(function(){
     $('.sub-area-label').mouseenter(function(e){
         $('.sub-area').hide()
         set_focus_area(e)
+
+        if ($('#video-arrow')){
+            $('#video-arrow').attr('src', "pageContent/arrows/left_right_arrow.png")
+        }
     })
 
     $('.sub-sub-area-label').mouseenter(function(e){
@@ -210,16 +217,32 @@ $(function(){
     })
 
 
+
+    $('#videos-focus-label').mouseenter(function(e){
+        $('#down-left-arrow').show()
+    })
+    $('.sub-video-label').mouseenter(function(e){
+        $('#down-left-arrow').remove()
+        $('#left-right-arrow').show()
+    })
+
+    $('#sub-area-videos').mouseenter(function(e){
+        $('#left-right-arrow').remove()
+    })
+
+
     
     $('.sub-sub-area').hide()  
     $('.sub-area').hide()  
     $('.focus-area').hide()  
+    $('.video-arrow').hide()
 
     if ($(window).width() < 768){
         set_window_style()
     }
     
     $(window).resize(set_window_style)
+
         
 
 })
