@@ -31,15 +31,27 @@ var videos = {
 
 
 
-var websites = {
+var websites = [
 
-    blings: {           title: "Blings",
-                        src: "http://www.blings.herokuapp.com"},
+    { title: "Sonifizer API",
+        src: "http://www.sonifizer.com"},
 
-    virtualhaircut: {   title: "Virtual Haircut",
-                        src: "http://virtualhaircut.herokuapp.com"},
+    { title: "Sonify Data",
+        src: "http://www.SonifyData.com"},
+
+    { title: "Audatar",
+        src: "http://www.Audatar.com"},
+
+    { title: "WDI-5",
+        src: "http://www.wdi5.com"},
+
+    { title: "Blings",
+        src: "http://blings.herokuapp.com"},
+
+    { title: "Virtual Haircut",
+        src: "http://virtualhaircut.herokuapp.com"}
                     
-}
+];
 
 
 
@@ -63,10 +75,8 @@ function unblink(wait_time)
 }
 
 
-// var dev_e;
+
 function set_focus_area(e){ 
-// dev_e = e
-// console.log(dev_e)
     var focus_label = e.target
     $(focus_label).siblings().removeClass('label-selected')
     $(focus_label).siblings().addClass('label-non-selected')
@@ -94,6 +104,18 @@ function add_video_node(title){
 }
 
 
+
+function fill_website_list(){
+
+    list =  $('#website-list');
+    $.each(websites, function(index, site){
+        var site_link = $('<a>')
+        site_link.attr('href', site.src)
+        site_link.text(site.title)
+        var site_node = $('<li>').append(site_link)
+       list.append(site_node)
+    })
+}
 
 
 
@@ -181,6 +203,7 @@ $(function(){
     timeBlink(1000)
 
 
+
     $('.area-label').mouseenter(function(e){
         $('.focus-area').hide()
         set_focus_area(e)
@@ -197,6 +220,9 @@ $(function(){
         var video_title = e.target.getAttribute('data-video')
         add_video_node(video_title)
     })
+
+
+    fill_website_list()
 
 
 
@@ -217,24 +243,13 @@ $(function(){
 
 
 
-// $.each(['click', 'mouseenter'], function(index, value){
 
-//     $('#videos-focus-label').on(value, function(e){
-//         $('#down-left-arrow').show()
-//     })
-//     $('.sub-video-label').on(value, function(e){
-//         $('#down-left-arrow').remove()
-//         $('#left-right-arrow').fadeIn(100)
-//     })
-//     $('#sub-area-videos').on(value, function(e){
-//         $('#left-right-arrow').fadeOut(100)
-//     })
-
-// })
 
 
     $('#videos-focus-label').mouseenter(function(e){
         $('#down-left-arrow').show()
+        $('#video_player_stage').show()
+        $('#video_player_stage').text(" ")
     })
     $('.sub-video-label').mouseenter(function(e){
         $('#down-left-arrow').remove()
@@ -255,6 +270,8 @@ $(function(){
     })
 
 
+
+
     
     $('.sub-sub-area').hide()  
     $('.sub-area').hide()  
@@ -266,7 +283,6 @@ $(function(){
     }
     
     $(window).resize(set_window_style)
-
-        
+ 
 
 })
