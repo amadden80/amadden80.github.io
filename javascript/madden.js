@@ -248,6 +248,7 @@ $(function(){
 
     $('#videos-focus-label').mouseenter(function(e){
         $('#down-left-arrow').show()
+        $('#video-sub-sub-focus-area').append($('<div id="video-player-stage"></div>'))
         $('#video_player_stage').show()
         $('#video_player_stage').text(" ")
     })
@@ -272,6 +273,7 @@ $(function(){
 
 
 
+
     
     $('.sub-sub-area').hide()  
     $('.sub-area').hide()  
@@ -283,6 +285,7 @@ $(function(){
     }
     
     $(window).resize(set_window_style)
+
  
 
 })
