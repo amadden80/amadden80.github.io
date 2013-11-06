@@ -48,7 +48,7 @@ var websites = [
         src: "http://blings.herokuapp.com"},
 
     { title: "Virtual Haircut",
-        src: "http://virtualhaircut.herokuapp.com"}
+        src: "https://virtualhaircut.herokuapp.com"}
                     
 ];
 
