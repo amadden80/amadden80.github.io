@@ -33,7 +33,7 @@ var videos = {
 var websites = [
 
     { title: "Sonifizer API",
-        src: "http://www.sonifizer.herokuapp.com"},
+        src: "http://sonifizer.herokuapp.com"},
 
     { title: "Sonify Data",
         src: "http://www.SonifyData.com"},
