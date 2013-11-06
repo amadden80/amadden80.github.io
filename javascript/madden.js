@@ -1,4 +1,3 @@
-
 var videos = {
 
     sweep: {        title: "Radiation Patterns Sweep",
@@ -34,7 +33,7 @@ var videos = {
 var websites = [
 
     { title: "Sonifizer API",
-        src: "http://www.sonifizer.com"},
+        src: "http://www.sonifizer.herokuapp.com"},
 
     { title: "Sonify Data",
         src: "http://www.SonifyData.com"},
