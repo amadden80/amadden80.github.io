@@ -4,7 +4,7 @@
 	  <channel>
 
 	    <title>ajm_dev</title>
-	    <description>Andrew</description>
+	    <description>Hi</description>
 	    <link>http://www.andrewmadden.com</link>
 	    <language>en-us</language>
 	    <copyright>Copyright 2014</copyright>
@@ -13,7 +13,7 @@
 	    <docs>http://www.andrewmadden.com</docs>
 	    <webMaster>amadden80@gmail.com</webMaster>
 
-	    <itunes:author>amadden80 @ gmail</itunes:author>
+	    <itunes:author>Andrew Madden</itunes:author>
 	    <itunes:subtitle> Nice Web-Guy </itunes:subtitle>
 	    <itunes:summary>I like intuition on things I "learned".</itunes:summary>
 
@@ -32,10 +32,10 @@
 
 		<item>
 			<title>Andrew Says...</title>
-			<link>http://www.andrewmadden.com</link>
-			<guid>http://www.andrewmadden.com/podcast/hello.wav</guid>
+			
+			<guid>http://www.andrewmadden.com/podcast/hello.m4a</guid>
 			<description>"Hello"</description>
-			<enclosure url="http://www.andrewmadden.com/podcast/hello.m4a" type="audio/mpeg"/>
+			<enclosure url="http://www.andrewmadden.com/podcast/hello.m4a" length="12000" type="audio/x-m4a"/>
 			<category>Podcasts</category>
 			<pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
 
@@ -44,10 +44,44 @@
 			<itunes:explicit>No</itunes:explicit>
 			<itunes:subtitle>"Hello"</itunes:subtitle>
 			<itunes:summary> Andrew says "Hello" </itunes:summary>
-			<itunes:duration>00:00:10</itunes:duration>
+			<itunes:duration>00:00:01</itunes:duration>
 			<itunes:keywords>Technology</itunes:keywords>
 		</item>
 
 	</channel>
 
+</rss>
+
+
+
+
+<itunes:subtitle>A SUBTITLE</itunes:subtitle>
+<itunes:author>YOUR NAME</itunes:author>
+<itunes:summary>A PARAGRAPH DESCRIBING THE SUBJECT OF YOUR PODCAST</itunes:summary>
+<description>A BRIEF SENTENCE ABOUT YOUR PODCAST</description>
+<itunes:owner>
+<itunes:name>YOUR NAME</itunes:name>
+<itunes:email>AN EMAIL ADDRESS FOR VISITORS (OPTIONAL)</itunes:email>
+</itunes:owner>
+<itunes:image href="URL OF AN IMAGE FOR THE PODCAST" />
+<itunes:category text="CHOOSE A CATEGORY FROM THE APPLE LIST (SEE BELOW)">
+<itunes:category text="CHOOSE A CATEGORY SUBTITLE"/>
+</itunes:category>
+<itunes:category text="ANOTHER CATEGORY (OPTIONAL)"/>
+ 
+<item>
+<title>TITLE OF THE EPISODE</title>
+<itunes:author>YOUR NAME</itunes:author>
+<itunes:subtitle>A SUBTITLE FOR THE EPISODE</itunes:subtitle>
+<itunes:summary>A DESCRIPTION OF THE CONTENTS OF YOUR EPISODE</itunes:summary>
+<enclosure url="THE FULL URL OF THE MEDIA FILE FOR THE EPISODE" length="FILE SIZE IN BYTES" type="FOR AN MP3 FILE - audio/mpeg" />
+<guid>THE FULL URL OF THE MEDIA FILE FOR THE EPISODE</guid>
+<pubDate>DATE, E.G. Wed, 15 Jun 2005 19:00:00 GMT</pubDate>
+<itunes:duration>DURATION H:MM:SS</itunes:duration>
+<itunes:keywords>ENTER KEYWORDS FOR SEARCHING</itunes:keywords>
+<itunes:explicit>yes IF CONTAINS ADULT MATERIAL, OTHERWISE no</itunes:explicit>
+</item>
+ 
+ 
+</channel>
 </rss>
