@@ -51,37 +51,3 @@
 	</channel>
 
 </rss>
-
-
-
-
-<itunes:subtitle>A SUBTITLE</itunes:subtitle>
-<itunes:author>YOUR NAME</itunes:author>
-<itunes:summary>A PARAGRAPH DESCRIBING THE SUBJECT OF YOUR PODCAST</itunes:summary>
-<description>A BRIEF SENTENCE ABOUT YOUR PODCAST</description>
-<itunes:owner>
-<itunes:name>YOUR NAME</itunes:name>
-<itunes:email>AN EMAIL ADDRESS FOR VISITORS (OPTIONAL)</itunes:email>
-</itunes:owner>
-<itunes:image href="URL OF AN IMAGE FOR THE PODCAST" />
-<itunes:category text="CHOOSE A CATEGORY FROM THE APPLE LIST (SEE BELOW)">
-<itunes:category text="CHOOSE A CATEGORY SUBTITLE"/>
-</itunes:category>
-<itunes:category text="ANOTHER CATEGORY (OPTIONAL)"/>
- 
-<item>
-<title>TITLE OF THE EPISODE</title>
-<itunes:author>YOUR NAME</itunes:author>
-<itunes:subtitle>A SUBTITLE FOR THE EPISODE</itunes:subtitle>
-<itunes:summary>A DESCRIPTION OF THE CONTENTS OF YOUR EPISODE</itunes:summary>
-<enclosure url="THE FULL URL OF THE MEDIA FILE FOR THE EPISODE" length="FILE SIZE IN BYTES" type="FOR AN MP3 FILE - audio/mpeg" />
-<guid>THE FULL URL OF THE MEDIA FILE FOR THE EPISODE</guid>
-<pubDate>DATE, E.G. Wed, 15 Jun 2005 19:00:00 GMT</pubDate>
-<itunes:duration>DURATION H:MM:SS</itunes:duration>
-<itunes:keywords>ENTER KEYWORDS FOR SEARCHING</itunes:keywords>
-<itunes:explicit>yes IF CONTAINS ADULT MATERIAL, OTHERWISE no</itunes:explicit>
-</item>
- 
- 
-</channel>
-</rss>
