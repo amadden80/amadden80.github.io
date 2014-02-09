@@ -13,6 +13,8 @@
 <docs>http://www.andrewmadden.com</docs>
 <webMaster>amadden80@gmail.com (Andrew Madden)</webMaster>
 
+<itunes:new-feed-url>http://www.amadden80.github.com/podcast/rss.xml</itunes:new-feed-url>
+
 <itunes:author>Andrew Madden</itunes:author>
 <itunes:subtitle> Nice Web-Guy </itunes:subtitle>
 <itunes:summary>I like intuition on things I "learned".</itunes:summary>
