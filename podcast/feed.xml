@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" rel="self" version="2.0">
   
 	  <channel>
 
@@ -8,10 +8,10 @@
 	    <link>http://www.andrewmadden.com</link>
 	    <language>en-us</language>
 	    <copyright>Copyright 2014</copyright>
-	    <lastBuildDate>Sun, 9 Feb 2013 11:30:00 -0500</lastBuildDate>
-	    <pubDate>Sun, 9 Feb 2013 11:30:00 -0500</pubDate>
+	    <lastBuildDate>Sun, 9 Feb 2014 11:30:00 -0500</lastBuildDate>
+	    <pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
 	    <docs>http://www.andrewmadden.com</docs>
-	    <webMaster>amadden80@gmail.com</webMaster>
+	    <webMaster>amadden80@gmail.com (Andrew Madden)</webMaster>
 
 	    <itunes:author>Andrew Madden</itunes:author>
 	    <itunes:subtitle> Nice Web-Guy </itunes:subtitle>
