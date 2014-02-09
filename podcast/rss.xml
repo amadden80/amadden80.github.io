@@ -24,9 +24,6 @@
 	    <itunes:summary>Short Clip of Andrew saying "hello"</itunes:summary>
 	    <enclosure url="http://amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg" />
 	    <pubDate>Sun, 09 Feb 2014 01:01:01 EST</pubDate>
-	    <itunes:category text="Technology">
-		    <itunes:category text="Podcasting"/>
-	    </itunes:category>
 	    <itunes:duration>00:00:01</itunes:duration>
 	    <itunes:explicit>no</itunes:explicit>
 	    <itunes:keywords>technology</itunes:keywords>
