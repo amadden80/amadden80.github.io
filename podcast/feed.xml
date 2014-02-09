@@ -34,7 +34,7 @@
 			<title>Andrew Says...</title>
 			<link>http://www.andrewmadden.com</link>
 			<guid>http://www.andrewmadden.com/podcast/hello.wav</guid>
-			<description> /description>
+			<description>"Hello"</description>
 			<enclosure url="http://www.andrewmadden.com/podcast/hello.wav" length="11779397" type="audio/wave"/>
 			<category>Podcasts</category>
 			<pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
@@ -46,7 +46,6 @@
 			<itunes:summary> Andrew says "Hello" </itunes:summary>
 			<itunes:duration>00:00:10</itunes:duration>
 			<itunes:keywords>Technology</itunes:keywords>
-
 		</item>
 
 	</channel>
