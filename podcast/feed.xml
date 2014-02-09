@@ -35,7 +35,7 @@
 			<link>http://www.andrewmadden.com</link>
 			<guid>http://www.andrewmadden.com/podcast/hello.wav</guid>
 			<description>"Hello"</description>
-			<enclosure url="http://www.andrewmadden.com/podcast/hello.wav" length="11779397" type="audio/wave"/>
+			<enclosure url="http://www.andrewmadden.com/podcast/hello.m4a" type="audio/mpeg"/>
 			<category>Podcasts</category>
 			<pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
 
