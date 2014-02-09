@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+
+<channel>
+
+<title>ajm_dev</title>
+<description>Hi</description>
+<link>http://www.andrewmadden.com/index.html</link>
+<language>en-us</language>
+<copyright>Copyright 2014</copyright>
+<lastBuildDate>Sun, 9 Feb 2014 11:30:00 -0500</lastBuildDate>
+<pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
+<docs>http://www.andrewmadden.com/index.html</docs>
+<webMaster>amadden80@gmail.com (Andrew Madden)</webMaster>
+
+<itunes:author>Andrew Madden</itunes:author>
+<itunes:subtitle> Nice Web-Guy </itunes:subtitle>
+<itunes:summary>I like intuition on things I "learned".</itunes:summary>
+
+<itunes:owner>
+       <itunes:name>Andrew Madden</itunes:name>
+       <itunes:email>amadden80@gmail.com</itunes:email>
+</itunes:owner>
+
+<itunes:explicit>No</itunes:explicit>
+
+<itunes:image href="http://www.andrewmadden.com/podcast/face.png"/>
+
+<itunes:category text="Technology">
+ <itunes:category text="Podcasting"/>
+</itunes:category>
+
+<item>
+<title>Andrew Says...</title>
+
+<guid>http://www.andrewmadden.com/podcast/hello.m4a</guid>
+<description>"Hello"</description>
+<enclosure url="http://www.andrewmadden.com/podcast/hello.m4a" length="12000" type="audio/x-m4a"/>
+<category>Podcasts</category>
+<pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
+
+<itunes:author>amadden80 @ gmail.com</itunes:author>
+
+<itunes:explicit>No</itunes:explicit>
+<itunes:subtitle>"Hello"</itunes:subtitle>
+<itunes:summary> Andrew says "Hello" </itunes:summary>
+<itunes:duration>00:00:01</itunes:duration>
+<itunes:keywords>Technology</itunes:keywords>
+</item>
+
+</channel>
+
+</rss>
