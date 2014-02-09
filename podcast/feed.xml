@@ -33,9 +33,9 @@
 <item>
 <title>Andrew Says...</title>
 
-<guid>http://www.andrewmadden.com/podcast/hello.m4a</guid>
+<guid>http://www.andrewmadden.com/podcast/hello.mp3</guid>
 <description>"Hello"</description>
-<enclosure url="http://www.amadden80.github.com/podcast/hello.m4a" length="12000" type="audio/x-m4a"/>
+<enclosure url="http://www.amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg"/>
 <category>Podcasts</category>
 <pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
 
