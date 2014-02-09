@@ -2,6 +2,7 @@
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <channel>
 	<title>ajm_dev</title>
+	<description>Development</description>
 	<itunes:author>Andrew</itunes:author>
 	<link>http://andrewmadden.com</link>
 	<itunes:subtitle>I develop </itunes:subtitle>
@@ -24,7 +25,7 @@
 	    <enclosure url="http://amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg" />
 	    <pubDate>Sun, 09 Feb 2014 01:01:01 EST</pubDate>
 	    <itunes:category text="Technology">
-		    <itunes:category text=""/>
+		    <itunes:category text="Podcasting"/>
 	    </itunes:category>
 	    <itunes:duration>00:00:01</itunes:duration>
 	    <itunes:explicit>no</itunes:explicit>
