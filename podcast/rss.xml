@@ -10,7 +10,7 @@
 	<copyright> by 2041</copyright>
 	<itunes:owner>
 	    <itunes:name>2041</itunes:name>
-	    <itunes:email>amadden80@gmail.com (Andrew Madden)</itunes:email>
+	    <itunes:email>amadden80@mac.com</itunes:email>
 	</itunes:owner>
 	<itunes:image href="http://amadden80.github.com/podcast/face.png" />
 	<itunes:category text="Technology">
@@ -18,7 +18,7 @@
 	</itunes:category>
 	<item>
 	    <title>Andrew Says...</title>
-	    <itunes:author>2041</itunes:author>
+	    <itunes:author>Andrew</itunes:author>
 	    <itunes:subtitle>"Hello"</itunes:subtitle>
 	    <itunes:summary>Short Clip of Andrew saying "hello"</itunes:summary>
 	    <enclosure url="http://amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/x-m4a" />
