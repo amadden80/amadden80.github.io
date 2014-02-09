@@ -13,8 +13,7 @@
 <docs>http://www.andrewmadden.com</docs>
 <webMaster>amadden80@gmail.com (Andrew Madden)</webMaster>
 
-<itunes:new-feed-url>http://www.amadden80.github.com/podcast/rss.xml</itunes:new-feed-url>
-
+<itunes:new-feed-url>http://amadden80.github.com/podcast/rss.xml</itunes:new-feed-url>
 
 <itunes:author>Andrew Madden</itunes:author>
 <itunes:subtitle> Nice Web-Guy </itunes:subtitle>
@@ -27,7 +26,7 @@
 
 <itunes:explicit>No</itunes:explicit>
 
-<itunes:image href="http://www.amadden80.github.com/podcast/face.png"/>
+<itunes:image href="http://amadden80.github.com/podcast/face.png"/>
 
 <itunes:category text="Technology">
  <itunes:category text="Podcasting"/>
@@ -38,7 +37,7 @@
 
 <guid>http://www.andrewmadden.com/podcast/hello.m4a</guid>
 <description>"Hello"</description>
-<enclosure url="http://www.amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg"/>
+<enclosure url="http://amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg"/>
 <category>Podcasts</category>
 <pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
 
