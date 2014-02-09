@@ -2,14 +2,14 @@
 <rss xmlns:itunes="http://www.itunes.com/DTDs/Podcast-1.0.dtd" version="2.0">
 <channel>
 	<title>ajm_dev</title>
-	<itunes:author>2041</itunes:author>
+	<itunes:author>Andrew</itunes:author>
 	<link>http://andrewmadden.com</link>
 	<itunes:subtitle>I develop </itunes:subtitle>
-	<itunes:summary>des</itunes:summary>
+	<itunes:summary>Dev</itunes:summary>
 	<language>en-us</language>
-	<copyright> by 2041</copyright>
+	<copyright>Andrew</copyright>
 	<itunes:owner>
-	    <itunes:name>2041</itunes:name>
+	    <itunes:name>amadden80</itunes:name>
 	    <itunes:email>amadden80@mac.com</itunes:email>
 	</itunes:owner>
 	<itunes:image href="http://amadden80.github.com/podcast/face.png" />
@@ -21,8 +21,8 @@
 	    <itunes:author>Andrew</itunes:author>
 	    <itunes:subtitle>"Hello"</itunes:subtitle>
 	    <itunes:summary>Short Clip of Andrew saying "hello"</itunes:summary>
-	    <enclosure url="http://amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/x-m4a" />
-	    <pubDate>Sun, 09 Feb 2009 01:01:01 EST</pubDate>
+	    <enclosure url="http://amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg" />
+	    <pubDate>Sun, 09 Feb 2014 01:01:01 EST</pubDate>
 	    <itunes:category text="Technology">
 		    <itunes:category text=""/>
 	    </itunes:category>
