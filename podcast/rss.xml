@@ -24,7 +24,7 @@
 
 <itunes:explicit>No</itunes:explicit>
 
-<itunes:image href="http://www.andrewmadden.com/podcast/face.png"/>
+<itunes:image href="http://www.amadden80.github.com/podcast/face.png"/>
 
 <itunes:category text="Technology">
  <itunes:category text="Podcasting"/>
@@ -35,7 +35,7 @@
 
 <guid>http://www.andrewmadden.com/podcast/hello.m4a</guid>
 <description>"Hello"</description>
-<enclosure url="http://www.andrewmadden.com/podcast/hello.m4a" length="12000" type="audio/x-m4a"/>
+<enclosure url="http://www.amadden80.github.com/podcast/hello.mp3" length="12000" type="audio/mpeg"/>
 <category>Podcasts</category>
 <pubDate>Sun, 9 Feb 2014 11:30:00 -0500</pubDate>
 
