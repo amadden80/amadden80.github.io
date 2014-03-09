@@ -1,0 +1,25 @@
+body {
+  background-color: lightgreen;
+}
+
+ul{
+  font-size: 1.5em;
+}
+
+li{
+  background-color: lightyellow;
+  border-radius: 1em;
+  padding: 0.5em;
+  margin: 0.25em;
+  width: 50%;
+  box-shadow: .1em .1em darkgreen;
+}
+
+button{
+	border-radius: 50%;
+	background-color: tan;
+}
+
+input{
+	 box-shadow: .01em .01em green;
+}
