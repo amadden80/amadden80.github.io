@@ -1,0 +1,50 @@
+body{
+  margin: 0;
+  padding: 0;
+  background-color: #dddddd;
+}
+
+h1{
+  font-family: 'Indie Flower', cursive;
+  font-size: 3em;
+  position: relative;
+}
+
+
+.hi{
+  opacity: 0;
+  display: inline-block;
+}
+
+.heads{
+  overflow: hidden;
+  padding: 1em;
+}
+
+.face {
+  width: 32%;
+  position: relative;
+  display: inline-block;
+}
+
+
+.banner-image{
+  width: 100%;
+  position: relative;
+}
+
+
+.image-pad{
+  overflow: hidden;
+  width: 100%;
+  height: 15em;
+}
+
+
+.information-block{
+  padding: 3em;
+  text-align: center;
+  height: 8em;
+  width: 100%;
+  margin: 0;
+}
