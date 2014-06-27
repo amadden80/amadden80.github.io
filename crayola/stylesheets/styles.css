@@ -1,0 +1,13 @@
+body {
+  background-color: lightgray;
+}
+
+svg {
+  background-color: white;
+}
+
+footer{
+  font-family: 'Dancing Script', cursive;
+  font-size: 5em;
+  text-align: center;
+}
