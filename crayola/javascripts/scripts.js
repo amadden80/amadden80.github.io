@@ -38,6 +38,8 @@ function projectData(data){
 
   projection.enter()
               .append('circle')
+              .style('opacity', 0)
+              .style('fill', function(d){ return d.fill; })
               .on('mousedown', function(){
                                   explode(d3.select(this));
                                 });
