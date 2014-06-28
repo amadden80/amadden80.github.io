@@ -9,17 +9,25 @@ function randomCirclesData(numCircles){
   for (var i = 0; i < numCircles; i++) {
     circles.push (
       {
-        r: ['5%', '25%', '50%', '75%'].sample(),
-        cx: ['5%', '25%', '50%', '75%'].sample(),
-        cy: ['5%', '25%', '50%', '75%'].sample(),
+        r: (Math.random()*5+2) + '%',
+        cx: (Math.random()*100) + '%',
+        cy: (Math.random()*100) + '%',
         fill: crayola.sample().hex,
-        opacity: '0.5'
+        opacity: Math.random()
       }
     );
   };
   ;
   return circles;
 };
+
+function explode(bubble){
+  bubble
+  .transition()
+    .duration(500)
+      .attr('r', '100%');
+  return this;
+}
 
 
 function projectData(data){
@@ -28,7 +36,11 @@ function projectData(data){
                       .selectAll("circle")
                       .data(data);
 
-  projection.enter().append('circle');
+  projection.enter()
+              .append('circle')
+              .on('mousedown', function(){
+                                  explode(d3.select(this));
+                                });
 
   var projection = d3.select("svg")
                       .selectAll("circle")
@@ -42,6 +54,7 @@ function projectData(data){
             .attr('cy', function(d){ return d.cy; })
             .style('fill', function(d){ return d.fill; })
             .style('opacity', function(d){ return d.opacity; });
+
 
   projection.exit()
               .remove();
@@ -57,8 +70,17 @@ window.onload=function(){
     .style("border", "1px solid black")
 
   setInterval(function(){
-    var numCircles = 5;
+    var numCircles = 57;
     projectData(randomCirclesData(numCircles));
-  }, 1000)
+  }, 900)
 
 };
+
+
+
+
+
+// var colorGradient = d3.scale.linear()
+//     .domain([0, 1])
+//     .range([crayola.sample().hex, crayola.sample().hex]);
+
