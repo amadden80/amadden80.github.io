@@ -34,12 +34,22 @@ p {
 .hi-cute{
     padding-top: 75%;
 }
-.hi-cute p{
-    font-size: 1.5em;
+
+
+
+footer{
+    margin-top: 2em;
+    font-size: 0.5em;
+    text-align: center;
 }
 
-
+.branch{
+    margin-bottom: 2em;
+    opacity: 0.05;
+}
 
 body{
     background-image: url("../images/crossword.png");
 }
+
+
