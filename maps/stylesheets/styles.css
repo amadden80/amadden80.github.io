@@ -1,0 +1,13 @@
+body{
+  background-color: lightblue;
+}
+
+.land {
+  fill: lightgreen;
+  stroke: #fff;
+}
+
+.state {
+  fill: none;
+  stroke: #fff;
+}
