@@ -116,7 +116,7 @@ var links = [],
   var svg;
   var world;
 
-  d3.json("/javascripts/world.json", function(data){
+  d3.json("javascripts/world.json", function(data){
 
     svg = d3.select("body").append("svg")
             .attr("width", width)
