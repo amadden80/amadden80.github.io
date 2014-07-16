@@ -1,36 +1,18 @@
-window.onload = function(){
 
+var svg;
+var proj;
+var world;
+var latitude;
+var longitude;
 
-
-function flying_arc(pts) {
-  var source = pts.source,
-      target = pts.target;
-
-  var mid = location_along_arc(source, target, .5);
-  var result = [ proj(source),
-                 sky(mid),
-                 proj(target) ]
-  return result;
-}
-
+var width = 1000,
+    height = 500;
 
 
 function refresh() {
   svg.selectAll(".land").attr("d", path);
   svg.selectAll(".point").attr("d", path);
-
-  svg.selectAll(".arc").attr("d", path)
-    .attr("opacity", function(d) {
-        return fade_at_edge(d)
-    })
-
-  svg.selectAll(".flyer")
-    .attr("d", function(d) { return swoosh(flying_arc(d)) })
-    .attr("opacity", function(d) {
-      return fade_at_edge(d)
-    })
 }
-
 
 var mousePostion, projRotation;
 function mousedown() {
@@ -54,10 +36,7 @@ function mouseup() {
   }
 }
 
-
-
 function drawGlobe(svg, world){
-
   svg.append("circle")
     .attr("cx", width / 2).attr("cy", height / 2)
     .attr("r", proj.scale())
@@ -68,67 +47,61 @@ function drawGlobe(svg, world){
     .attr("class", "land noclicks")
     .attr("d", path)
     .style("fill", "lig");
-
 }
 
 
+window.onload = function(){
+
+  d3.select(window)
+      .on("mousemove", mousemove)
+      .on("mouseup", mouseup);
 
 
+  window.proj = d3.geo.orthographic()
+      .translate([width / 2, height / 2])
+      .clipAngle(90)
+      .scale(220);
 
-d3.select(window)
-    .on("mousemove", mousemove)
-    .on("mouseup", mouseup);
+  window.sky = d3.geo.orthographic()
+      .translate([width / 2, height / 2])
+      .clipAngle(90)
+      .scale(300);
 
-var width = 1000,
-    height = 500;
+  window.path = d3.geo.path().projection(window.proj).pointRadius(2);
 
-var proj = d3.geo.orthographic()
-    .translate([width / 2, height / 2])
-    .clipAngle(90)
-    .scale(220);
+  setInterval(function(){
+    var rot = proj.rotate()
+    proj.rotate([rot[0]+=0.2, rot[1]+=0.01]);
+    refresh();
+  }, 50)
 
-var sky = d3.geo.orthographic()
-    .translate([width / 2, height / 2])
-    .clipAngle(90)
-    .scale(300);
-
-
-setInterval(function(){
-  var rot = proj.rotate()
-  proj.rotate([rot[0]+=0.2, rot[1]+=0.01]);
-  refresh();
-}, 50)
-
-
-var path = d3.geo.path().projection(proj).pointRadius(2);
-
-var swoosh = d3.svg.line()
-      .x(function(d) { return d[0] })
-      .y(function(d) { return d[1] })
-      .interpolate("cardinal")
-      .tension(.0);
-
-var links = [],
-    arcLines = [];
-
-
-
-  var svg;
-  var world;
+  svg = d3.select("body").append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .on("mousedown", mousedown);
 
   d3.json("javascripts/world.json", function(data){
-
-    svg = d3.select("body").append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .on("mousedown", mousedown);
 
     world = data;
 
     drawGlobe(svg, world)
 
+    var watchID = navigator.geolocation.watchPosition(function(position) {
+
+      latitude = position.coords.latitude;
+      longitude = position.coords.longitude;
+
+      place = [{ "type": "Feature", "geometry": { "type": "Point", "coordinates": [ longitude, latitude ] } }]
+
+      svg.append("g").attr("class","points")
+          .selectAll("text").data(place)
+        .enter().append("path")
+          .attr("class", "point")
+          .attr("d", path)
+          .style('fill', 'red')
+
+    })
+
   })
 
-
 }
-
