@@ -38,18 +38,12 @@ var websites = [
     { title: "Sonify Data",
         src: "http://www.SonifyData.com"},
 
-    { title: "Audatar",
-        src: "http://www.Audatar.com"},
-
-    { title: "WDI-5",
-        src: "http://www.wdi5.com"},
-
     { title: "Blings",
         src: "http://blings.herokuapp.com"},
 
     { title: "Virtual Haircut",
         src: "https://virtualhaircut.herokuapp.com"}
-                    
+
 ];
 
 
@@ -75,7 +69,7 @@ function unblink(wait_time)
 
 
 
-function set_focus_area(e){ 
+function set_focus_area(e){
     var focus_label = e.target
     $(focus_label).siblings().removeClass('label-selected')
     $(focus_label).siblings().addClass('label-non-selected')
@@ -84,7 +78,7 @@ function set_focus_area(e){
     $(focus_label).addClass('label-selected')
     var focus = e.target.getAttribute('data-focus')
     $('#'+focus).show()
-    
+
 }
 
 
@@ -124,7 +118,7 @@ function set_window_style(){
         var publications_focus = $('#publications-focus')
         var web_development_focus = $('#web_development-focus')
         var video_player_stage = $('#video-player-stage')
-    
+
     if ($(window).width() < 768){
 
         video_player_stage.empty()
@@ -133,7 +127,7 @@ function set_window_style(){
         video_player_stage_links = $('<ul class="square">')
 
         $.each(videos, function(index, value){
-            var vide_nod = $("<li><a target='_blank' href='" + value.src +"' > " + value.title + "<br></a></li>")    
+            var vide_nod = $("<li><a target='_blank' href='" + value.src +"' > " + value.title + "<br></a></li>")
             video_player_stage_links.append(vide_nod)
         })
         video_player_stage.append(video_player_stage_links)
@@ -146,10 +140,10 @@ function set_window_style(){
         videos_title = $("<h3 class='small-label'>").text('Videos')
 
         $('#focus-area').append([   publications_title,
-                                    publications_focus, 
+                                    publications_focus,
                                     websites_title,
                                     web_development_focus,
-                                    videos_title, 
+                                    videos_title,
                                     video_player_stage])
 
         video_focus.hide()
@@ -163,7 +157,7 @@ function set_window_style(){
         $('.area-label').show()
         $('.small-label').remove()
 
-        $('#focus-area').append([  publications_focus, 
+        $('#focus-area').append([  publications_focus,
                                     video_focus,
                                     web_development_focus])
 
@@ -174,7 +168,7 @@ function set_window_style(){
         video_player_stage.show()
 
         video_focus.append(video_player_stage)
-        
+
     }
 
 }
@@ -273,18 +267,18 @@ $(function(){
 
 
 
-    
-    $('.sub-sub-area').hide()  
-    $('.sub-area').hide()  
-    $('.focus-area').hide()  
+
+    $('.sub-sub-area').hide()
+    $('.sub-area').hide()
+    $('.focus-area').hide()
     $('.video-arrow').hide()
 
     if ($(window).width() < 768){
         set_window_style()
     }
-    
+
     $(window).resize(set_window_style)
 
- 
+
 
 })
