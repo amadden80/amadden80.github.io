@@ -1,19 +1,22 @@
 var mattsOpinion = 0.75;
-var andrewsOpinion = 1;
+// var andrewsOpinion = 1;
 
 var backgroundMoveRate = andrewsOpinion;
 
 
-function updateBannerImagePostion(){
-  $('.banner-image').each(function(dd, ele){
+
+function updateBannerImagePostion(bannerImages){
+  bannerImages.each(function(dd, ele){
     imagePad = $(ele).parent();
     var imageStart = imagePad.position().top;
-    $(ele).animate({top: backgroundMoveRate*($(window).scrollTop()-imageStart)}, 10);
+    $(ele).css('top', backgroundMoveRate*($(window).scrollTop()-imageStart));
   })
 }
 
 
 $(window).on("scroll", function(){
+
+  var bannerImages = $('.banner-image');
 
   var opacityLevel = $(window).scrollTop()/$(window).height();
 
@@ -29,9 +32,7 @@ $(window).on("scroll", function(){
     $(".left-head").attr('src', 'images/ahh.png')
   }
 
-
-
-  updateBannerImagePostion()
+  updateBannerImagePostion(bannerImages);
 
 });
 
