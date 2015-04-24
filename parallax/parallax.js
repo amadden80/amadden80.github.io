@@ -8,7 +8,7 @@ function updateBannerImagePostion(){
   $('.banner-image').each(function(dd, ele){
     imagePad = $(ele).parent();
     var imageStart = imagePad.position().top;
-    $(ele).css("top", backgroundMoveRate*($(window).scrollTop()-imageStart));
+    $(ele).animate({top: backgroundMoveRate*($(window).scrollTop()-imageStart)}, 10);
   })
 }
 
