@@ -1,7 +1,7 @@
 var mattsOpinion = 0.75;
-// var andrewsOpinion = 1;
+var andrewsOpinion = 1;
 
-var backgroundMoveRate = andrewsOpinion;
+var backgroundMoveRate = mattsOpinion;
 
 
 
