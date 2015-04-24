@@ -16,8 +16,6 @@ function updateBannerImagePostion(bannerImages){
 
 $(window).on("scroll", function(){
 
-  var bannerImages = $('.banner-image');
-
   var opacityLevel = $(window).scrollTop()/$(window).height();
 
   $('.information-block').css("backgroundColor", "rgba(100,0,0,"+opacityLevel+")")
@@ -38,5 +36,6 @@ $(window).on("scroll", function(){
 
 
 $(function(){
-  updateBannerImagePostion();
+  var bannerImages = $('.banner-image');
+  updateBannerImagePostion(bannerImages);
 })
