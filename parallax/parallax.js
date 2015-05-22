@@ -1,7 +1,5 @@
-var mattsOpinion = 0.75;
-var andrewsOpinion = 1;
 
-var backgroundMoveRate = mattsOpinion;
+var backgroundMoveRate = 0.5;
 
 
 
@@ -17,7 +15,7 @@ function updateBannerImagePostion(bannerImages){
 $(function(){
   var bannerImages = $('.banner-image');
   updateBannerImagePostion(bannerImages);
-  
+
   $(window).on("scroll", function(){
 
     var opacityLevel = $(window).scrollTop()/$(window).height();
