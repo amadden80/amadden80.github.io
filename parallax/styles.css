@@ -31,6 +31,13 @@ h1{
 .banner-image{
   width: 100%;
   position: relative;
+  -webkit-transition: .025s;
+  -moz-transition: .025s;
+  -o-transition: .025s;
+
+  -webkit-transition-property: top;
+  -moz-transition-property: top;
+  -o-transition-property: top;
 }
 
 
