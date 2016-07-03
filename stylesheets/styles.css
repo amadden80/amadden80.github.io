@@ -13,7 +13,7 @@
         #video-player-stage{
             /*display:inline-block;*/
             background-color: black;
-            width: 100%; 
+            width: 100%;
             height: 100%;
         }
 }
@@ -30,7 +30,7 @@
         }
         #video-player-stage{
             background-color: black;
-            width= 100%; 
+            width= 100%;
             height= 100%;
         }
 }
@@ -48,7 +48,7 @@
         }
         #video-player-stage{
             background-color: none;
-            width= 100%; 
+            width= 100%;
             height= 100%;
             }
 }
@@ -64,10 +64,11 @@ body{
     -moz-transition: text-shadow 1s;
     -o-transition: text-shadow 1s;
     transition: text-shadow 1s;
+    text-shadow:0.0px 0.0px 0.0px black;
 }
 .shadowable:hover{
-    text-shadow:0.5px 1px 1.5px grey;
-} 
+    text-shadow:0.25px 0.25px 0.25px black;
+}
 
 
 .growable{
@@ -79,9 +80,9 @@ body{
 }
 .growable:hover{
     transform: scale(1.01);
-    -ms-transform: scale(1.01); 
-    -webkit-transform: scale(1.01); 
-} 
+    -ms-transform: scale(1.01);
+    -webkit-transform: scale(1.01);
+}
 
 
 #focus-team-member{
@@ -127,4 +128,3 @@ a{
 .video-arrow{
     opacity: 0.25;
 }
-
