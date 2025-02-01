@@ -1,11 +1,7 @@
 <!DOCTYPE html>
-<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
-<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
-<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
-<!--[if (gte IE 9)|!(IE)]><!--><html lang="en"> <!--<![endif]-->
-<head>
-
-<!--
+<html lang="en">
+  <head>
+    <!--
                           MMMMMMMM
                     MMMMMMMMMMMMMMMMMMMM
                  MMMMMMMMMMMMMMMMMMMMMMMMMMM
@@ -55,266 +51,93 @@ MMMM    MMMMMMMMMMMMMMMMMMMMM     MMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 -->
 
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Andrew Madden</title>
-    <meta name="description" content="Andrew Madden Portfolio">
-    <meta name="author" content="Andrew Madden">
+    <meta name="description" content="Andrew Madden" />
+    <meta name="author" content="Andrew Madden" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
 
+    <link rel="shortcut icon" href="images/Fav.png" />
+  </head>
+  <body>
+    <div style="display:flex;flex-wrap: wrap;align-items: center;justify-content: space-evenly;">
+      <div  style="min-width:300px">
+        <img src="images/face.png" class="ajm-face" />
+      </div>
+      <div></div>
 
-    <link rel="stylesheet" href="stylesheets/base.css">
-    <link rel="stylesheet" href="stylesheets/skeleton.css">
-    <link rel="stylesheet" href="stylesheets/layout.css">
-    <link rel="stylesheet" href="stylesheets/styles.css">
-
-    <link rel="shortcut icon" href="pageContent/images/Fav.png">
-
-    <script src="javascript/jquery-2.0.3.js"></script>
-    <script src="javascript/madden.js"></script>
-
-</head>
-<body>
-
-    <div class="container">
-
-
-        <div class='two columns'>
-            <img src="pageContent/images/face.png" id="ajm-face" />
-        </div>
-        <div class='row'></div>
-
-        <div class="eight columns">
-            <h3 class="" >Andrew Madden</h3>
-            <ul class="square">
-                <li><strong>Web-Developer: </strong>Full-Stack development with focus in Javascript and Ruby.</li>
-                <li><strong>Educator: </strong> Experience teaching programming, digital signal theory, and web-development. </li>
-                <li><strong>Audio Technologist: </strong>Audio signal processing with focus in spatial audio.</li>
+      <div style="min-width:50vw">
+        <h3>Andrew Madden</h3>
+        <br />
+        <ul>
+          <li>
+            <strong>Contact: </strong>
+            <ul>
+              <li>
+                <a href="mailto:amadden80@gmail.com">amadden80@gmail.com</a>
+              </li>
+              <li>
+                <a
+                  target="_blank"
+                  href="http://www.linkedin.com/pub/andrew-madden/15/397/81"
+                  >Linked-In</a
+                >
+              </li>
+              <li>
+                <a target="_blank" href="http://www.github.com/amadden80"
+                  >Github</a
+                >
+              </li>
             </ul>
-        </div>
+          </li>
 
-        <div class="three columns offset-by-two">
-            <br/>
-            <ul id="contacts-links-documents">
-
-                <li><strong>Contact: </strong>
-                    <ul class="shadowable square" >
-                        <li class="shadowable" >
-                            <a href="mailto:amadden80@gmail.com">amadden80@gmail.com</a>
-                        </li>
-                        <li class="shadowable" >
-                            <a target="_blank" href="http://www.linkedin.com/pub/andrew-madden/15/397/81">Linked-In</a>
-                        </li>
-                        <li class="shadowable" >
-                            <a target="_blank" href="http://www.github.com/amadden80">Github</a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li><strong>Documents: </strong>
-                    <ul class="square" >
-                        <li class="shadowable">
-                            <a target="_blank"href="AndrewMadden_Resume.pdf">Resume</a>
-                        </li>
-                        <li class="shadowable">
-                            <a target="_blank"href="AndrewMadden_MastersThesis.pdf">Masters Thesis</a>
-                        </il>
-                    </ul>
-                </li>
-
+          <li>
+            <strong>Documents: </strong>
+            <ul>
+              <li>
+                <a target="_blank" href="AndrewMadden_Resume.pdf">Resume</a>
+              </li>
+              <li>
+                <a target="_blank" href="AndrewMadden_MastersThesis.pdf"
+                  >Masters Thesis</a
+                >
+              </li>
             </ul>
-        </div>
-
-
-
-        <div class='row'></div>
-
-        <section>
-            <h3 class="four columns shadowable area-label" id = "web_development-focus-label" data-focus="web_development-focus">
-                Web-Tech
-            </h3>
-
-            <h3 class="offset-by-one three columns shadowable area-label" id = "videos-focus-label" data-focus="videos-focus">
-                Videos
-            </h3>
-
-            <h3 class="offset-by-two four columns shadowable area-label" id = "publications-focus-label" data-focus="publications-focus">
-                Publications
-            </h3>
-        </section>
-
-        <div class='row'></div>
-        <div class="sixteen columns">
-            <section id='focus-area'>
-
-
-            <!-- web_development -->
-              <div id='web_development-focus' class='focuses sixteen columns focus-area'>
-
-                <div class="five columns square" id="websites-links">
-                    <h4>
-                        Some Technologies I like
-                    </h4>
-                    <ul class="square">
-                      <li>
-                        Javascript
-                        <ul class="square">
-                            <li>Node</li>
-                            <li>Express</li>
-                        </ul>
-                      </li>
-
-                      <li>
-                        Ruby
-                        <ul class="square">
-                            <li>Ruby-On-Rails</li>
-                            <li>Sinatra</li>
-                        </ul>
-                      </li>
-
-                      <li>HTML5/CSS3</li>
-                    </ul>
-                </div>
-
-                <!-- <div class="five columns square" id="websites-links">
-                    <h4>
-                        Work
-                    </h4>
-                    <ul class="square" id="website-list">
-
-                    </ul>
-                </div> -->
-
-
-              </div>
-              <!-- /web_development -->
-
-
-
-              <!-- Videos -->
-              <div id='videos-focus' class='focuses sixteen columns focus-area'>
-
-
-                <div class="five columns sub-label-stage sub-video-label">
-                    <h4>
-                     Category
-                    </h4>
-                    <ul class="square">
-                        <li class="shadowable sub-area-label" data-focus="amp-rad-pat">
-                            Amp Radiation Patterns
-                        </li>
-                        <li class="shadowable sub-area-label" data-focus="3D_spatial_audio">
-                            Amp 3D & Spatial Audio
-                        </li>
-                        <li class="shadowable sub-area-label" data-focus="fun_audio">
-                            Fun
-                        </li>
-                    </ul>
-                    <img class="two columns video-arrow" id ="left-right-arrow" src="pageContent/images/left_right_arrow.png" />
-                </div>
-
-                <img class="two columns video-arrow" id ="down-left-arrow" src="pageContent/images/down_left_arrow.png" />
-
-
-                <div class="four columns sub-area-stage" id="sub-area-videos" >
-                    <div id="amp-rad-pat" class="sub-area">
-                        <h4>
-                            Amp Videos
-                        </h4>
-                        <ul class="square">
-                            <li class="shadowable sub-sub-area-label square" data-video="sweep">
-                                Sweep
-                            </li>
-                            <li class="shadowable sub-sub-area-label" data-video="aur">
-                                Aurlization
-                            </li>
-                            <li class="shadowable sub-sub-area-label" data-video="sweetspot">
-                                Sweet-Spot
-                            </li>
-                            <li class="shadowable sub-sub-area-label" data-video="guitar">
-                                Guitar
-                            </li>
-                            <li class="shadowable sub-sub-area-label" data-video="drums">
-                                Drums
-                            </li>
-                        </ul>
-                     </div>
-
-                      <div id="3D_spatial_audio" class="sub-area">
-                        <h4>
-                            3D-Audio Videos
-                        </h4>
-                        <ul class="square">
-                            <li class="shadowable sub-sub-area-label square" data-video="panning">
-                              3D Panning Interface
-                            </li>
-                            <li class="shadowable sub-sub-area-label" data-video="pd_binaural">
-                              Binaural Processing
-                            </li>
-                        </ul>
-                     </div>
-
-                      <div id="fun_audio" class="sub-area">
-                        <h4>
-                            Fun Videos
-                        </h4>
-                        <ul class="square">
-                            <li class="shadowable sub-sub-area-label square" data-video="thanks">
-                              Convolver's Thanks
-                            </li>
-                            <li class="shadowable sub-sub-area-label" data-video="art1">
-                               Fire
-                            </li>
-                        </ul>
-                     </div>
-
-                </div>
-
-                <div id="video-sub-sub-focus-area" class="five columns sub-sub-focus-area">
-                    <!-- <div id="video-player-stage"></div> -->
-                </div>
-
-              </div>
-              <!-- /videos-focus -->
-
-
-              <!-- publications_focus -->
-              <div id='publications-focus' class='focuses fourteen columns focus-area'>
-                <h4>
-                    Conferences
-                </h4>
-                <ul class="square">
-                  <li>
-                    <h4>
-                        “Measuring Spectral Directivity of an Electric Guitar Amplifier.”
-                    </h4>
-                    <p>
-                        Dr. Agnieszka Roginska, Alex Case, Andrew Madden, and Jim Anderson. Audio Engineering Society: 132nd Convention – Budapest, 2012
-                    </p>
-                  </li>
-
-                  <li>
-                    <h4>
-                        “Multi-Touch Room Expansion Controller for Real-Time Acoustic Gestures.”
-                    </h4>
-                    <p>
-                        Andrew Madden, Pia Blumental, Areti Andreopoulou, Braxton Boren, Shengfeng Hu, Zhengshan Shi, Agnieszka Roginska. Audio Engineering Society: 131st Convention - New York, 2011
-
-                    </p>
-                  </li>
-
-                </ul>
-
-              </div>
-              <!-- /publications_focus -->
-
-            </section>
-        </div>
-
-    </div><!-- container -->
-
-    <div id="hidden-bin" style="display: none;">
+          </li>
+        </ul>
+      </div>
     </div>
+    <script>
+      function scheduleBlink(wait_time = 5000) {
+        var nextBlink = Math.random() * wait_time + 1000;
+        setTimeout(function () {
+          toggleBlink("images/blink.png");
+          setTimeout(function () {
+            toggleBlink("images/face.png");
+            scheduleBlink(wait_time);
+          }, Math.random() * 100 + 50);
+        }, nextBlink);
+      }
 
-</body>
+      function toggleBlink(src) {
+        document.querySelector(".ajm-face").src = src;
+      }
+
+      (function () {
+        var ajmFace = document.querySelector(".ajm-face");
+        ajmFace.addEventListener("mouseenter", function () {
+          toggleBlink("images/ahh.png");
+        });
+        ajmFace.addEventListener("mouseleave", function () {
+          toggleBlink("images/face.png");
+        });
+
+        scheduleBlink();
+      })();
+    </script>
+  </body>
 </html>
