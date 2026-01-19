@@ -62,15 +62,15 @@ MMMM    MMMMMMMMMMMMMMMMMMMMM     MMMMMMMMMMMMMMMMMMMMMMMMMMM
     />
 
     <link rel="shortcut icon" href="images/Fav.png" />
+    <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <div style="display:flex;flex-wrap: wrap;align-items: center;justify-content: space-evenly;">
-      <div  style="min-width:300px">
-        <img src="images/face.png" class="ajm-face" />
-      </div>
-      <div></div>
+    <main class="container">
+      <section class="face-wrapper">
+        <img src="images/face.png" class="ajm-face" alt="Andrew Madden face" />
+      </section>
 
-      <div style="min-width:50vw">
+      <section class="info">
         <h3>Andrew Madden</h3>
         <br />
         <ul>
@@ -109,35 +109,8 @@ MMMM    MMMMMMMMMMMMMMMMMMMMM     MMMMMMMMMMMMMMMMMMMMMMMMMMM
             </ul>
           </li>
         </ul>
-      </div>
-    </div>
-    <script>
-      function scheduleBlink(wait_time = 5000) {
-        var nextBlink = Math.random() * wait_time + 1000;
-        setTimeout(function () {
-          toggleBlink("images/blink.png");
-          setTimeout(function () {
-            toggleBlink("images/face.png");
-            scheduleBlink(wait_time);
-          }, Math.random() * 100 + 50);
-        }, nextBlink);
-      }
-
-      function toggleBlink(src) {
-        document.querySelector(".ajm-face").src = src;
-      }
-
-      (function () {
-        var ajmFace = document.querySelector(".ajm-face");
-        ajmFace.addEventListener("mouseenter", function () {
-          toggleBlink("images/ahh.png");
-        });
-        ajmFace.addEventListener("mouseleave", function () {
-          toggleBlink("images/face.png");
-        });
-
-        scheduleBlink();
-      })();
-    </script>
+      </section>
+    </main>
+    <script src="js/main.js" defer></script>
   </body>
 </html>
