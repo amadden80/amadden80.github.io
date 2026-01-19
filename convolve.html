@@ -1,336 +1,508 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!-- This was 100% vibe coded.  None was done by hand... -->
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Two-recording convolution demo</title>
-    <script>console.log(" This was 100% 'vibe coded'.")</script>
     <style>
-        body {
-            font-family: system-ui, Arial, sans-serif;
-            margin: 20px;
-        }
-
-        .row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        button {
-            padding: 8px 12px;
-        }
-
-        canvas {
-            background: #111;
-            width: 100%;
-            height: 100px;
-            border-radius: 4px;
-        }
-
-        .panel {
-            max-width: 900px;
-            margin-bottom: 18px;
-        }
-
-        .label {
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .status {
-            color: #444;
-            font-size: 0.9rem;
-        }
+      body {
+        font-family: system-ui, Arial, sans-serif;
+        margin: 20px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      button {
+        padding: 8px 12px;
+      }
+      canvas {
+        background: #111;
+        width: 100%;
+        height: 100px;
+        border-radius: 4px;
+      }
+      .panel {
+        max-width: 900px;
+        margin-bottom: 18px;
+      }
+      .label {
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .status {
+        color: #444;
+        font-size: 0.9rem;
+      }
+      input[type="file"] {
+        display: none;
+      }
     </style>
-</head>
-
-<body>
-    <h1>Record two clips, convolve, and play</h1>
+  </head>
+  <body>
+    <h1>Record two clips, upload, convolve, and play</h1>
+    <h3>Warning:  This was "vibe coded".  Use at your own risk (of fun).</h3>
 
     <div class="panel">
-        <div class="label">Recording A</div>
-        <div class="row">
-            <button id="recA">Start A</button>
-            <button id="playA" disabled>Play A</button>
-            <span id="statusA" class="status">Idle</span>
-        </div>
-        <canvas id="canvasA" width="900" height="120"></canvas>
+      <div class="label">Track A</div>
+      <div class="row">
+        <button id="recA">Record</button>
+        <button id="playA" disabled>Play</button>
+        <button id="clearA" disabled>Clear</button>
+        <button id="uploadA">Upload</button>
+        <input id="fileA" type="file" accept="audio/*" />
+        <span id="statusA" class="status">Idle</span>
+      </div>
+      <canvas id="canvasA" width="900" height="120"></canvas>
     </div>
 
     <div class="panel">
-        <div class="label">Recording B</div>
-        <div class="row">
-            <button id="recB">Start B</button>
-            <button id="playB" disabled>Play B</button>
-            <span id="statusB" class="status">Idle</span>
-        </div>
-        <canvas id="canvasB" width="900" height="120"></canvas>
+      <div class="label">Track B</div>
+      <div class="row">
+        <button id="recB">Record</button>
+        <button id="playB" disabled>Play</button>
+        <button id="clearB" disabled>Clear</button>
+        <button id="uploadB">Upload</button>
+        <input id="fileB" type="file" accept="audio/*" />
+        <span id="statusB" class="status">Idle</span>
+      </div>
+      <canvas id="canvasB" width="900" height="120"></canvas>
     </div>
 
     <div class="panel">
-        <div class="label">Output (A convolved with B)</div>
-        <div class="row">
-            <button id="convolvePlay" disabled>Convolve and Play</button>
-            <span id="statusOut" class="status">Waiting for both recordings</span>
-        </div>
-        <canvas id="canvasOut" width="900" height="120"></canvas>
+      <div class="label">Output (A convolved with B)</div>
+      <div class="row">
+        <button id="convolvePlay" disabled>Convolve and Play</button>
+        <span id="statusOut" class="status">Waiting for both tracks</span>
+      </div>
+      <canvas id="canvasOut" width="900" height="120"></canvas>
     </div>
 
     <script>
-        (async function () {
-            let audioCtx;
-            function getAudioCtx() {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                return audioCtx;
-            }
+      (async function () {
+        let audioCtx;
+        function getAudioCtx() {
+          if (!audioCtx)
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          return audioCtx;
+        }
 
-            const state = {
-                A: { mediaRecorder: null, chunks: [], stream: null, buffer: null, analyser: null, vizId: 0 },
-                B: { mediaRecorder: null, chunks: [], stream: null, buffer: null, analyser: null, vizId: 0 },
-                outputBuffer: null
+        const state = {
+          A: {
+            mediaRecorder: null,
+            chunks: [],
+            stream: null,
+            buffer: null,
+            analyser: null,
+            vizId: 0,
+          },
+          B: {
+            mediaRecorder: null,
+            chunks: [],
+            stream: null,
+            buffer: null,
+            analyser: null,
+            vizId: 0,
+          },
+          outputBuffer: null,
+        };
+
+        const ui = {
+          A: {
+            rec: document.getElementById("recA"),
+            play: document.getElementById("playA"),
+            clear: document.getElementById("clearA"),
+            upload: document.getElementById("uploadA"),
+            file: document.getElementById("fileA"),
+            status: document.getElementById("statusA"),
+            canvas: document.getElementById("canvasA"),
+          },
+          B: {
+            rec: document.getElementById("recB"),
+            play: document.getElementById("playB"),
+            clear: document.getElementById("clearB"),
+            upload: document.getElementById("uploadB"),
+            file: document.getElementById("fileB"),
+            status: document.getElementById("statusB"),
+            canvas: document.getElementById("canvasB"),
+          },
+          out: {
+            convolve: document.getElementById("convolvePlay"),
+            status: document.getElementById("statusOut"),
+            canvas: document.getElementById("canvasOut"),
+          },
+        };
+
+        function drawLiveWave(analyser, canvas, rafStore) {
+          const ctx2d = canvas.getContext("2d");
+          const data = new Uint8Array(analyser.fftSize);
+          function draw() {
+            analyser.getByteTimeDomainData(data);
+            ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+            ctx2d.strokeStyle = "#4fd1c5";
+            ctx2d.lineWidth = 2;
+            ctx2d.beginPath();
+            const mid = canvas.height / 2;
+            for (let i = 0; i < data.length; i++) {
+              const x = (i / (data.length - 1)) * canvas.width;
+              const y = mid + ((data[i] - 128) / 128) * (canvas.height / 2 - 4);
+              if (i === 0) ctx2d.moveTo(x, y);
+              else ctx2d.lineTo(x, y);
+            }
+            ctx2d.stroke();
+            rafStore.id = requestAnimationFrame(draw);
+          }
+          draw();
+        }
+
+        function drawStaticWave(buffer, canvas, color = "#a78bfa") {
+          const ctx2d = canvas.getContext("2d");
+          ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+          if (!buffer) return;
+          const data = buffer.getChannelData(0);
+          const step = Math.ceil(data.length / canvas.width);
+          const amp = canvas.height / 2 - 4;
+          ctx2d.strokeStyle = color;
+          ctx2d.lineWidth = 1.5;
+          ctx2d.beginPath();
+          for (let i = 0; i < canvas.width; i++) {
+            const start = i * step;
+            const end = Math.min(start + step, data.length);
+            let min = 1.0,
+              max = -1.0;
+            for (let j = start; j < end; j++) {
+              const v = data[j];
+              if (v < min) min = v;
+              if (v > max) max = v;
+            }
+            const x = i;
+            const y1 = canvas.height / 2 + min * amp;
+            const y2 = canvas.height / 2 + max * amp;
+            ctx2d.moveTo(x, y1);
+            ctx2d.lineTo(x, y2);
+          }
+          ctx2d.stroke();
+        }
+
+        function disableTrack(which) {
+          ui[which].play.disabled = true;
+          ui[which].clear.disabled = true;
+        }
+
+        function enableTrackPlayback(which) {
+          ui[which].play.disabled = false;
+          ui[which].clear.disabled = false;
+        }
+
+        function stopLiveIfAny(which) {
+          const s = state[which];
+          if (s.mediaRecorder && s.mediaRecorder.state === "recording")
+            s.mediaRecorder.stop();
+          if (s.vizId && s.vizId.id) cancelAnimationFrame(s.vizId.id);
+          if (s.stream) s.stream.getTracks().forEach((t) => t.stop());
+          s.mediaRecorder = null;
+          s.stream = null;
+          s.analyser = null;
+          s.vizId = 0;
+        }
+
+        async function toggleRecord(which) {
+          const s = state[which];
+          const u = ui[which];
+
+          if (!s.mediaRecorder || s.mediaRecorder.state === "inactive") {
+            const ctx = getAudioCtx();
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+            s.stream = stream;
+            const options = { mimeType: "audio/webm;codecs=opus" };
+            const mr = new MediaRecorder(
+              stream,
+              MediaRecorder.isTypeSupported(options.mimeType)
+                ? options
+                : undefined
+            );
+            s.chunks = [];
+            mr.ondataavailable = (e) => {
+              if (e.data && e.data.size) s.chunks.push(e.data);
             };
+            mr.onstart = () => {
+              u.rec.textContent = "Stop";
+              u.status.textContent = "Recording...";
+              const source = ctx.createMediaStreamSource(stream);
+              const analyser = ctx.createAnalyser();
+              analyser.fftSize = 2048;
+              source.connect(analyser);
+              s.analyser = analyser;
+              s.vizId = { id: 0 };
+              drawLiveWave(analyser, u.canvas, s.vizId);
+              u.play.disabled = true;
+              // Keep Clear enabled so user can cancel state if desired
+              u.clear.disabled = false;
+            };
+            mr.onstop = async () => {
+              if (s.vizId && s.vizId.id) cancelAnimationFrame(s.vizId.id);
+              if (s.stream) s.stream.getTracks().forEach((t) => t.stop());
+              u.status.textContent = "Decoding...";
+              try {
+                const blob = new Blob(s.chunks, { type: mr.mimeType });
+                const arrayBuf = await blob.arrayBuffer();
+                const decoded = await getAudioCtx().decodeAudioData(
+                  arrayBuf.slice(0)
+                );
+                s.buffer = decoded;
+                u.status.textContent = `Recorded: ${decoded.duration.toFixed(
+                  2
+                )}s`;
+                drawStaticWave(decoded, u.canvas);
+                enableTrackPlayback(which);
+                maybeEnableConvolve();
+              } catch (e) {
+                console.error(e);
+                u.status.textContent = "Decode failed";
+                disableTrack(which);
+              }
+              u.rec.textContent = "Record";
+            };
+            s.mediaRecorder = mr;
+            mr.start();
+          } else if (s.mediaRecorder.state === "recording") {
+            s.mediaRecorder.stop();
+          }
+        }
 
-            const btnA = document.getElementById('recA');
-            const btnB = document.getElementById('recB');
-            const playA = document.getElementById('playA');
-            const playB = document.getElementById('playB');
-            const statusA = document.getElementById('statusA');
-            const statusB = document.getElementById('statusB');
-            const statusOut = document.getElementById('statusOut');
-            const canvasA = document.getElementById('canvasA');
-            const canvasB = document.getElementById('canvasB');
-            const canvasOut = document.getElementById('canvasOut');
-            const convolveBtn = document.getElementById('convolvePlay');
+        ui.A.rec.addEventListener("click", () => toggleRecord("A"));
+        ui.B.rec.addEventListener("click", () => toggleRecord("B"));
 
-            function drawLiveWave(analyser, canvas, rafStore) {
-                const canvasCtx = canvas.getContext('2d');
-                const data = new Uint8Array(analyser.fftSize);
-                function draw() {
-                    analyser.getByteTimeDomainData(data);
-                    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-                    canvasCtx.strokeStyle = '#4fd1c5';
-                    canvasCtx.lineWidth = 2;
-                    canvasCtx.beginPath();
-                    const mid = canvas.height / 2;
-                    for (let i = 0; i < data.length; i++) {
-                        const x = i / (data.length - 1) * canvas.width;
-                        const y = mid + (data[i] - 128) / 128 * (canvas.height / 2 - 4);
-                        if (i === 0) canvasCtx.moveTo(x, y); else canvasCtx.lineTo(x, y);
-                    }
-                    canvasCtx.stroke();
-                    rafStore.id = requestAnimationFrame(draw);
-                }
-                draw();
+        function maybeEnableConvolve() {
+          const ready = !!(state.A.buffer && state.B.buffer);
+          ui.out.convolve.disabled = !ready;
+          ui.out.status.textContent = ready
+            ? "Ready to convolve"
+            : "Waiting for both tracks";
+        }
+
+        function normalizeBuffer(buf) {
+          const ch = buf.numberOfChannels;
+          let peak = 0;
+          for (let c = 0; c < ch; c++) {
+            const d = buf.getChannelData(c);
+            for (let i = 0; i < d.length; i++)
+              peak = Math.max(peak, Math.abs(d[i]));
+          }
+          const scale = peak > 0 ? 0.9 / peak : 1.0;
+          if (scale === 1.0) return buf;
+          const ctx = getAudioCtx();
+          const out = ctx.createBuffer(ch, buf.length, buf.sampleRate);
+          for (let c = 0; c < ch; c++) {
+            const src = buf.getChannelData(c);
+            const dst = out.getChannelData(c);
+            for (let i = 0; i < src.length; i++) dst[i] = src[i] * scale;
+          }
+          return out;
+        }
+
+        function playBuffer(buffer, onEnded) {
+          const ctx = getAudioCtx();
+          const src = ctx.createBufferSource();
+          let toPlay = buffer;
+          if (buffer.sampleRate !== ctx.sampleRate) {
+            const resampled = ctx.createBuffer(
+              buffer.numberOfChannels,
+              Math.floor(buffer.duration * ctx.sampleRate),
+              ctx.sampleRate
+            );
+            for (let c = 0; c < buffer.numberOfChannels; c++) {
+              const from = buffer.getChannelData(c);
+              const to = resampled.getChannelData(c);
+              const ratio = from.length / to.length;
+              for (let i = 0; i < to.length; i++) {
+                to[i] = from[Math.min(from.length - 1, Math.floor(i * ratio))];
+              }
             }
+            toPlay = resampled;
+          }
+          src.buffer = toPlay;
+          src.connect(ctx.destination);
+          src.start();
+          if (onEnded) src.onended = onEnded;
+        }
 
-            function drawStaticWave(buffer, canvas, color = '#a78bfa') {
-                const canvasCtx = canvas.getContext('2d');
-                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-                if (!buffer) return;
-                const data = buffer.getChannelData(0);
-                const step = Math.ceil(data.length / canvas.width);
-                const amp = canvas.height / 2 - 4;
-                canvasCtx.strokeStyle = color;
-                canvasCtx.lineWidth = 1.5;
-                canvasCtx.beginPath();
-                for (let i = 0; i < canvas.width; i++) {
-                    const start = i * step;
-                    const end = Math.min(start + step, data.length);
-                    let min = 1.0, max = -1.0;
-                    for (let j = start; j < end; j++) {
-                        const v = data[j];
-                        if (v < min) min = v;
-                        if (v > max) max = v;
-                    }
-                    const x = i;
-                    const y1 = canvas.height / 2 + min * amp;
-                    const y2 = canvas.height / 2 + max * amp;
-                    canvasCtx.moveTo(x, y1);
-                    canvasCtx.lineTo(x, y2);
-                }
-                canvasCtx.stroke();
+        ui.A.play.addEventListener("click", () => {
+          if (!state.A.buffer) return;
+          ui.A.status.textContent = "Playing...";
+          playBuffer(state.A.buffer, () => {
+            ui.A.status.textContent = `Length: ${state.A.buffer.duration.toFixed(
+              2
+            )}s`;
+          });
+        });
+        ui.B.play.addEventListener("click", () => {
+          if (!state.B.buffer) return;
+          ui.B.status.textContent = "Playing...";
+          playBuffer(state.B.buffer, () => {
+            ui.B.status.textContent = `Length: ${state.B.buffer.duration.toFixed(
+              2
+            )}s`;
+          });
+        });
+
+        async function convolveAndPlay() {
+          const bufA = state.A.buffer;
+          const bufB = state.B.buffer;
+          if (!bufA || !bufB) return;
+
+          const sr = getAudioCtx().sampleRate;
+          function toMono(buf) {
+            if (buf.numberOfChannels === 1) return buf;
+            const out = getAudioCtx().createBuffer(
+              1,
+              buf.length,
+              buf.sampleRate
+            );
+            const d0 = out.getChannelData(0);
+            for (let c = 0; c < buf.numberOfChannels; c++) {
+              const d = buf.getChannelData(c);
+              for (let i = 0; i < d.length; i++)
+                d0[i] += d[i] / buf.numberOfChannels;
             }
+            return out;
+          }
+          const Amono = toMono(bufA);
+          const Bmono = toMono(bufB);
+          const impulse = normalizeBuffer(Bmono);
+          const totalSec = Amono.duration + impulse.duration;
 
-            async function toggleRecord(which) {
-                const s = state[which];
-                const btn = which === 'A' ? btnA : btnB;
-                const statusEl = which === 'A' ? statusA : statusB;
-                const canvas = which === 'A' ? canvasA : canvasB;
-                const playBtn = which === 'A' ? playA : playB;
+          const offline = new OfflineAudioContext(
+            1,
+            Math.ceil(totalSec * sr),
+            sr
+          );
+          const src = offline.createBufferSource();
+          const Aoffline = offline.createBuffer(1, Amono.length, sr);
+          Aoffline.copyToChannel(Amono.getChannelData(0), 0);
+          src.buffer = Aoffline;
 
-                if (!s.mediaRecorder || s.mediaRecorder.state === 'inactive') {
-                    const ctx = getAudioCtx();
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    s.stream = stream;
-                    const options = { mimeType: 'audio/webm;codecs=opus' };
-                    const mr = new MediaRecorder(stream, MediaRecorder.isTypeSupported(options.mimeType) ? options : undefined);
-                    s.chunks = [];
-                    mr.ondataavailable = e => { if (e.data && e.data.size) s.chunks.push(e.data); };
-                    mr.onstart = () => {
-                        btn.textContent = which === 'A' ? 'Stop A' : 'Stop B';
-                        statusEl.textContent = 'Recording...';
-                        const source = ctx.createMediaStreamSource(stream);
-                        const analyser = ctx.createAnalyser();
-                        analyser.fftSize = 2048;
-                        source.connect(analyser);
-                        s.analyser = analyser;
-                        s.vizId = { id: 0 };
-                        drawLiveWave(analyser, canvas, s.vizId);
-                        playBtn.disabled = true;
-                    };
-                    mr.onstop = async () => {
-                        if (s.vizId && s.vizId.id) cancelAnimationFrame(s.vizId.id);
-                        if (s.stream) s.stream.getTracks().forEach(t => t.stop());
-                        statusEl.textContent = 'Decoding...';
-                        try {
-                            const blob = new Blob(s.chunks, { type: mr.mimeType });
-                            const arrayBuf = await blob.arrayBuffer();
-                            const decoded = await getAudioCtx().decodeAudioData(arrayBuf.slice(0));
-                            s.buffer = decoded;
-                            statusEl.textContent = `Recorded: ${decoded.duration.toFixed(2)}s`;
-                            drawStaticWave(decoded, canvas);
-                            playBtn.disabled = false;
-                            maybeEnableConvolve();
-                        } catch (e) {
-                            console.error(e);
-                            statusEl.textContent = 'Decode failed';
-                            playBtn.disabled = true;
-                        }
-                        btn.textContent = which === 'A' ? 'Start A' : 'Start B';
-                    };
-                    s.mediaRecorder = mr;
-                    mr.start();
-                } else if (s.mediaRecorder.state === 'recording') {
-                    s.mediaRecorder.stop();
-                }
-            }
+          const convolver = offline.createConvolver();
+          const impOffline = offline.createBuffer(1, impulse.length, sr);
+          impOffline.copyToChannel(impulse.getChannelData(0), 0);
+          convolver.buffer = impOffline;
+          convolver.normalize = false;
 
-            btnA.addEventListener('click', () => toggleRecord('A'));
-            btnB.addEventListener('click', () => toggleRecord('B'));
+          src.connect(convolver).connect(offline.destination);
+          src.start(0);
+          src.stop(Amono.duration);
 
-            function maybeEnableConvolve() {
-                if (state.A.buffer && state.B.buffer) {
-                    convolveBtn.disabled = false;
-                    statusOut.textContent = 'Ready to convolve';
-                }
-            }
+          ui.out.status.textContent = "Rendering convolution...";
+          const rendered = await offline.startRendering();
 
-            function normalizeBuffer(buf) {
-                const ch = buf.numberOfChannels;
-                let peak = 0;
-                for (let c = 0; c < ch; c++) {
-                    const d = buf.getChannelData(c);
-                    for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i]));
-                }
-                const scale = peak > 0 ? 0.9 / peak : 1.0;
-                if (scale === 1.0) return buf;
-                const ctx = getAudioCtx();
-                const out = ctx.createBuffer(ch, buf.length, buf.sampleRate);
-                for (let c = 0; c < ch; c++) {
-                    const src = buf.getChannelData(c);
-                    const dst = out.getChannelData(c);
-                    for (let i = 0; i < src.length; i++) dst[i] = src[i] * scale;
-                }
-                return out;
-            }
+          const renderedNorm = normalizeBuffer(rendered);
+          state.outputBuffer = renderedNorm;
 
-            function playBuffer(buffer, onEnded) {
-                const ctx = getAudioCtx();
-                const src = ctx.createBufferSource();
-                let toPlay = buffer;
-                if (buffer.sampleRate !== ctx.sampleRate) {
-                    const resampled = ctx.createBuffer(buffer.numberOfChannels, Math.floor(buffer.duration * ctx.sampleRate), ctx.sampleRate);
-                    for (let c = 0; c < buffer.numberOfChannels; c++) {
-                        const from = buffer.getChannelData(c);
-                        const to = resampled.getChannelData(c);
-                        const ratio = from.length / to.length;
-                        for (let i = 0; i < to.length; i++) {
-                            to[i] = from[Math.min(from.length - 1, Math.floor(i * ratio))];
-                        }
-                    }
-                    toPlay = resampled;
-                }
-                src.buffer = toPlay;
-                src.connect(ctx.destination);
-                src.start();
-                if (onEnded) src.onended = onEnded;
-            }
+          drawStaticWave(renderedNorm, ui.out.canvas, "#f59e0b");
+          ui.out.status.textContent = `Rendered: ${renderedNorm.duration.toFixed(
+            2
+          )}s, playing...`;
+          playBuffer(renderedNorm, () => {
+            ui.out.status.textContent = "Done";
+          });
+        }
 
-            playA.addEventListener('click', () => {
-                if (!state.A.buffer) return;
-                statusA.textContent = 'Playing...';
-                playBuffer(state.A.buffer, () => { statusA.textContent = `Recorded: ${state.A.buffer.duration.toFixed(2)}s`; });
-            });
+        ui.out.convolve.addEventListener("click", convolveAndPlay);
 
-            playB.addEventListener('click', () => {
-                if (!state.B.buffer) return;
-                statusB.textContent = 'Playing...';
-                playBuffer(state.B.buffer, () => { statusB.textContent = `Recorded: ${state.B.buffer.duration.toFixed(2)}s`; });
-            });
+        // Upload per track
+        ui.A.upload.addEventListener("click", () => ui.A.file.click());
+        ui.B.upload.addEventListener("click", () => ui.B.file.click());
 
-            async function convolveAndPlay() {
-                const bufA = state.A.buffer;
-                const bufB = state.B.buffer;
-                if (!bufA || !bufB) return;
+        async function loadFileInto(which, file) {
+          if (!file) return;
+          const s = state[which];
+          const u = ui[which];
 
-                const sr = getAudioCtx().sampleRate;
-                function toMono(buf) {
-                    if (buf.numberOfChannels === 1) return buf;
-                    const out = getAudioCtx().createBuffer(1, buf.length, buf.sampleRate);
-                    const d0 = out.getChannelData(0);
-                    for (let c = 0; c < buf.numberOfChannels; c++) {
-                        const d = buf.getChannelData(c);
-                        for (let i = 0; i < d.length; i++) d0[i] += d[i] / buf.numberOfChannels;
-                    }
-                    return out;
-                }
-                const Amono = toMono(bufA);
-                const Bmono = toMono(bufB);
-                const impulse = normalizeBuffer(Bmono);
-                const totalSec = Amono.duration + impulse.duration;
+          // Stop any live recording or visualization for this track
+          stopLiveIfAny(which);
 
-                const offline = new OfflineAudioContext(1, Math.ceil(totalSec * sr), sr);
-                const src = offline.createBufferSource();
-                const Aoffline = offline.createBuffer(1, Amono.length, sr);
-                Aoffline.copyToChannel(Amono.getChannelData(0), 0);
-                src.buffer = Aoffline;
+          u.status.textContent = "Loading file...";
+          disableTrack(which);
 
-                const convolver = offline.createConvolver();
-                const impOffline = offline.createBuffer(1, impulse.length, sr);
-                impOffline.copyToChannel(impulse.getChannelData(0), 0);
-                convolver.buffer = impOffline;
-                convolver.normalize = false;
+          try {
+            const arrayBuf = await file.arrayBuffer();
+            const decoded = await getAudioCtx().decodeAudioData(
+              arrayBuf.slice(0)
+            );
+            s.buffer = decoded;
+            drawStaticWave(decoded, u.canvas);
+            u.status.textContent = `Loaded: ${decoded.duration.toFixed(2)}s`;
+            enableTrackPlayback(which);
+            maybeEnableConvolve();
+          } catch (e) {
+            console.error(e);
+            u.status.textContent = "Load or decode failed";
+            disableTrack(which);
+          }
+        }
 
-                src.connect(convolver).connect(offline.destination);
-                src.start(0);
-                src.stop(Amono.duration);
+        ui.A.file.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file && !file.type.startsWith("audio/")) {
+            ui.A.status.textContent = "Not an audio file";
+            e.target.value = "";
+            return;
+          }
+          loadFileInto("A", file);
+          e.target.value = "";
+        });
+        ui.B.file.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file && !file.type.startsWith("audio/")) {
+            ui.B.status.textContent = "Not an audio file";
+            e.target.value = "";
+            return;
+          }
+          loadFileInto("B", file);
+          e.target.value = "";
+        });
 
-                statusOut.textContent = 'Rendering convolution...';
-                const rendered = await offline.startRendering();
+        // Clear per track
+        function clearTrack(which) {
+          const s = state[which];
+          const u = ui[which];
 
-                const renderedNorm = normalizeBuffer(rendered);
-                state.outputBuffer = renderedNorm;
+          stopLiveIfAny(which);
+          s.buffer = null;
+          s.chunks = [];
+          const ctx2d = u.canvas.getContext("2d");
+          ctx2d.clearRect(0, 0, u.canvas.width, u.canvas.height);
+          u.status.textContent = "Idle";
+          u.rec.textContent = "Record";
+          disableTrack(which);
 
-                drawStaticWave(renderedNorm, canvasOut, '#f59e0b');
-                statusOut.textContent = `Rendered: ${renderedNorm.duration.toFixed(2)}s, playing...`;
-                playBuffer(renderedNorm, () => { statusOut.textContent = 'Done'; });
-            }
+          // Clear output if either input cleared
+          state.outputBuffer = null;
+          const out2d = ui.out.canvas.getContext("2d");
+          out2d.clearRect(0, 0, ui.out.canvas.width, ui.out.canvas.height);
+          ui.out.status.textContent = "Waiting for both tracks";
+          ui.out.convolve.disabled = true;
+        }
 
-            convolveBtn.addEventListener('click', convolveAndPlay);
+        ui.A.clear.addEventListener("click", () => clearTrack("A"));
+        ui.B.clear.addEventListener("click", () => clearTrack("B"));
 
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('getUserMedia not supported in this browser.');
-            }
-            if (typeof MediaRecorder === 'undefined') {
-                alert('MediaRecorder is not supported in this browser.');
-            }
-        })();
+        // Feature checks
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.warn(
+            "getUserMedia not supported in this browser. Recording will be disabled, but upload and convolution still work."
+          );
+        }
+        if (typeof MediaRecorder === "undefined") {
+          console.warn(
+            "MediaRecorder is not supported in this browser. Recording will be disabled."
+          );
+        }
+      })();
     </script>
-</body>
-
+  </body>
 </html>
