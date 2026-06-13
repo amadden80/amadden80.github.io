@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Bread Zaddy 🍞</title>
+<style>
+  html,body{margin:0;padding:0;background:#2b2018;display:flex;flex-direction:column;align-items:center;font-family:"Trebuchet MS",sans-serif;color:#f3e7d3;min-height:100vh;overscroll-behavior:none;}
+  h1{margin:10px 0 2px;font-size:clamp(18px,4.5vw,28px);letter-spacing:2px;color:#f0c060;text-shadow:2px 2px 0 #00000055;}
+  #sub{margin:0 0 8px;font-size:clamp(10px,2.5vw,13px);opacity:.8;}
+  canvas{background:#caa472;border:6px solid #5a4330;border-radius:10px;box-shadow:0 8px 30px #000a;
+         width:min(96vw,900px);height:auto;touch-action:none;}
+  #help{font-size:12px;margin-top:8px;opacity:.75;max-width:920px;text-align:center;padding:0 10px;}
+  kbd{background:#4a3826;border-radius:4px;padding:1px 6px;border:1px solid #6e573e;}
+  /* --- touch controls: only shown on coarse-pointer (touch) devices --- */
+  #touchUI{display:none;}
+  @media (pointer:coarse){
+    #touchUI{display:block;}
+    #help{display:none;}
+  }
+  #joyZone{position:fixed;left:0;bottom:0;width:46vw;height:38vh;touch-action:none;z-index:10;}
+  #joyBase{position:absolute;width:104px;height:104px;border-radius:50%;background:#f3e7d322;
+           border:2px solid #f3e7d355;display:none;pointer-events:none;}
+  #joyKnob{position:absolute;width:48px;height:48px;border-radius:50%;background:#f0c060cc;
+           border:2px solid #5a4330;display:none;pointer-events:none;}
+  #btnE{position:fixed;right:18px;bottom:60px;width:88px;height:88px;border-radius:50%;z-index:10;
+        background:#f0c060ee;color:#3a2c1c;border:4px solid #5a4330;font:bold 30px "Trebuchet MS";
+        box-shadow:0 4px 14px #0008;touch-action:none;user-select:none;-webkit-user-select:none;}
+  #btnE:active{transform:scale(.92);background:#ffd966;}
+</style>
+</head>
+<body>
+<h1>🍞 BREAD ZADDY 🍞</h1>
+<p id="sub">Bake sourdough. Stay swole. Choose wisely.</p>
+<canvas id="c" width="900" height="600"></canvas>
+<p id="help"><kbd>WASD</kbd>/<kbd>←↑↓→</kbd> move &nbsp;·&nbsp; <kbd>E</kbd>/<kbd>Space</kbd> interact &nbsp;·&nbsp; Run several batches at once! Scoop starter at the bowl to begin each one. &nbsp;·&nbsp; ARMS power mixing · CORE powers kneading · LEGS power running. Neglect a part and zaddy gets fat, weak... and whiny.</p>
+<div id="touchUI">
+  <div id="joyZone"><div id="joyBase"></div><div id="joyKnob"></div></div>
+  <button id="btnE">E</button>
+</div>
+<script>
+"use strict";
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// ---------- input ----------
+const keys = {};
+let interactPressed = false;
+addEventListener('keydown', e => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+  const k = e.key.toLowerCase();
+  if ((k === 'e' || k === ' ') && !keys[k]) interactPressed = true;
+  keys[k] = true;
+  if (game.over && k === 'r') reset();
+});
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+// ---------- touch controls ----------
+const joy = { x: 0, y: 0 };   // analog vector, magnitude 0..1
+{
+  const zone = document.getElementById('joyZone');
+  const base = document.getElementById('joyBase');
+  const knob = document.getElementById('joyKnob');
+  const R = 52;
+  let originX = 0, originY = 0, touchId = null;
+  const place = (el, x, y, half) => { el.style.left = (x-half)+'px'; el.style.top = (y-half)+'px'; };
+  zone.addEventListener('touchstart', ev => {
+    ev.preventDefault();
+    const t = ev.changedTouches[0];
+    touchId = t.identifier; originX = t.clientX; originY = t.clientY;
+    base.style.display = knob.style.display = 'block';
+    place(base, originX, originY, 52); place(knob, originX, originY, 24);
+  }, {passive:false});
+  zone.addEventListener('touchmove', ev => {
+    ev.preventDefault();
+    for (const t of ev.changedTouches){
+      if (t.identifier !== touchId) continue;
+      let dx = t.clientX - originX, dy = t.clientY - originY;
+      const m = Math.hypot(dx, dy);
+      if (m > R){ dx = dx/m*R; dy = dy/m*R; }
+      joy.x = dx/R; joy.y = dy/R;
+      place(knob, originX + dx, originY + dy, 24);
+    }
+  }, {passive:false});
+  const end = ev => {
+    for (const t of ev.changedTouches){
+      if (t.identifier !== touchId) continue;
+      touchId = null; joy.x = 0; joy.y = 0;
+      base.style.display = knob.style.display = 'none';
+    }
+  };
+  zone.addEventListener('touchend', end);
+  zone.addEventListener('touchcancel', end);
+
+  const btn = document.getElementById('btnE');
+  btn.addEventListener('touchstart', ev => {
+    ev.preventDefault();
+    if (game.over) reset();
+    else interactPressed = true;
+  }, {passive:false});
+  // tap the board itself to restart after game over
+  cv.addEventListener('touchstart', () => { if (game.over) reset(); });
+}
+
+// ---------- stations ----------
+const FLOOR_TOP = 200;
+const GYM_TOP = 424;
+const stations = {
+  starter: { x: 90,  y: 170, w: 90,  h: 80, label: 'STARTER JAR' },
+  mixer:   { x: 240, y: 170, w: 110, h: 80, label: 'MIXING BOWL' },
+  knead:   { x: 410, y: 170, w: 120, h: 80, label: 'KNEAD COUNTER' },
+  proof:   { x: 590, y: 170, w: 100, h: 80, label: 'PROOFING BASKET' },
+  oven:    { x: 760, y: 160, w: 110, h: 95, label: 'OVEN' },
+  trash:   { x: 18,  y: 250, w: 52,  h: 64, label: 'TRASH', zone:'floor' },
+  arms:    { x: 80,  y: 472, w: 140, h: 112, label: 'ARM DAY', zone:'gym' },
+  legs:    { x: 380, y: 472, w: 160, h: 112, label: 'LEG DAY', zone:'gym' },
+  core:    { x: 690, y: 472, w: 150, h: 112, label: 'CORE DAY', zone:'gym' },
+};
+
+// ---------- game state ----------
+// Multiple batches at once! Each station slot holds its own dough:
+//   doughs.mixer  {p, ready}   — mash to mix (ARM strength)
+//   doughs.knead  {p, ready}   — mash to knead (CORE strength)
+//   doughs.proof  {p, ready}   — rises on its own
+//   doughs.oven   {p}          — bakes on its own; pull between 75 and 115
+// carry: null | 'mixed' | 'kneaded' | 'proofed'  — the dough in his hands
+let game;
+function reset() {
+  game = {
+    t: 0,
+    over: false, win:false, reason:'',
+    loaves: 0, goal: 5,
+    starter: 70,
+    starterFeed: null,               // {p} — digesting a feed; starter rises on its own, like proofing
+    starterReady: false,             // a ripe scoop waiting at the jar — carry it to the bowl
+    arms: 80, legs: 80, core: 80,
+    joy: 80,                         // JOY/love bar — fill it by petting the cat
+    doughs: { mixer: null, knead: null, proof: null, oven: null },
+    carry: null,
+    msg: 'Feed the starter, then scoop a batch at the BOWL!', msgT: 5,
+    flash: 0, crumbs: [], hearts: [], lastWhine: -9, lastMeow: -9,
+    loaf: null,                      // a freshly pulled loaf flying off screen {x,y,vx,vy,rot}
+    cat: { x: 200, y: 360, tx: 640, ty: 360, pauseT: 1, face: 1, walk: 0 },  // a grey cat wandering the floor
+  };
+  zaddy.x = 450; zaddy.y = 340; zaddy.face = 1; zaddy.dirY = 0; zaddy.bob = 0;
+  zaddy.workout = null; zaddy.workT = 0; zaddy.moving = false; zaddy.dance = 0; zaddy.petting = false;
+}
+const zaddy = { x:450, y:340, face:1, dirY:0, bob:0, workout:null, workT:0, moving:false, speed:200, dance:0, petting:false };
+
+function say(m, t=3){ game.msg = m; game.msgT = t; }
+function whine(lines){   // weak-body complaints, rate-limited so he's whiny but not unbearable
+  if (game.t - game.lastWhine < 3.5) return;
+  game.lastWhine = game.t;
+  say(lines[Math.floor(Math.random()*lines.length)], 2.2);
+}
+const WHINE_ARMS = ['Scrawny arms can\'t mix! 😩','These twig arms... ARM DAY, stat!','I\'m stirring with wet noodles!'];
+const WHINE_CORE = ['My core KNEEDS more! 😫','No abs, no windowpane...','This belly folds better than I do!'];
+const WHINE_LEGS = ['Oh no! I\'m so slow! I need a leg day! 🐌','These legs are pure ciabatta...','Waddle waddle... LEG DAY. NOW.'];
+
+function near(s){
+  const cx = s.x + s.w/2;
+  const cy = (s.zone === 'gym' || s.zone === 'floor') ? s.y + s.h/2 : Math.max(s.y + s.h/2 + 60, FLOOR_TOP+60);
+  return Math.hypot(zaddy.x - cx, zaddy.y - cy) < (s.zone==='gym' ? 110 : s.zone==='floor' ? 115 : 95);
+}
+
+// short verb shown in the floating prompt — mirrors what pressing E would actually do
+function actionLabel(k){
+  const d = game.doughs, c = game.carry;
+  if (k === 'arms') return 'LIFT';
+  if (k === 'legs') return 'RUN';
+  if (k === 'core') return 'CRUNCH';
+  if (k === 'trash') return c === 'trash' ? 'TOSS' : '';
+  if (k === 'starter'){
+    if (c === 'starter') return 'DROP';
+    if (c) return '';
+    if (game.starterReady || game.starterFeed) return 'GRAB';
+    return 'FEED';
+  }
+  if (k === 'mixer'){
+    if (!d.mixer) return c === 'starter' ? 'ADD' : c === 'mixed' ? 'DROP' : '';
+    if (!d.mixer.ready) return c ? '' : 'MIX';
+    return c ? '' : 'GRAB';
+  }
+  if (k === 'knead'){
+    if (!d.knead) return (c === 'mixed' || c === 'kneaded') ? 'DROP' : '';
+    if (!d.knead.ready) return c ? '' : 'KNEAD';
+    return c ? '' : 'GRAB';
+  }
+  if (k === 'proof'){
+    if (!d.proof) return (c === 'kneaded' || c === 'proofed') ? 'DROP' : '';
+    return c ? '' : 'GRAB';
+  }
+  if (k === 'oven'){
+    if (!d.oven) return c === 'proofed' ? 'BAKE' : '';
+    return c ? '' : 'GRAB';
+  }
+  return '';
+}
+const flab = v => (100 - v) / 100;
+// strong = DRAMATICALLY fast: full stat finishes a mash job in ~4 presses, weak in ~35
+const mixPower   = () => 2 + 23 * Math.pow(game.arms/100, 1.5);
+const kneadPower = () => 2 + 23 * Math.pow(game.core/100, 1.5);
+// full legs = he ROCKETS around the kitchen; shot legs = a sad shuffle
+const runSpeed   = () => 90 + 270 * Math.pow(game.legs/100, 1.5);
+
+// ---------- update ----------
+let last = performance.now();
+function tick(now){
+  const dt = Math.min((now - last)/1000, .05); last = now;
+  if (!game.over) update(dt);
+  draw();
+  requestAnimationFrame(tick);
+}
+
+function update(dt){
+  game.t += dt;
+  game.msgT -= dt;
+  game.flash = Math.max(0, game.flash - dt);
+  zaddy.workT = Math.max(0, zaddy.workT - dt*2);
+  if (zaddy.workT <= 0) zaddy.workout = null;
+
+  // victory breakdance — controls locked, the floor is his
+  if (zaddy.dance > 0){
+    zaddy.dance -= dt;
+    zaddy.moving = false;
+    interactPressed = false;
+  }
+
+  // the thrown loaf sails off screen right
+  if (game.loaf){
+    const L = game.loaf;
+    L.x += L.vx*dt; L.y += L.vy*dt; L.vy += 420*dt; L.rot += dt*9;
+    if (L.x > W + 80) game.loaf = null;
+  }
+
+  // movement — LEG strength is run speed (keyboard or touch joystick)
+  let dx = (keys['d']||keys['arrowright']?1:0) - (keys['a']||keys['arrowleft']?1:0);
+  let dy = (keys['s']||keys['arrowdown']?1:0) - (keys['w']||keys['arrowup']?1:0);
+  let mag = 1;
+  if (!dx && !dy && Math.hypot(joy.x, joy.y) > .2){
+    dx = joy.x; dy = joy.y;
+    mag = Math.min(1, Math.hypot(joy.x, joy.y));   // analog: ease off near center
+  }
+  // right on top of the cat? he CAN'T resist — slows way down to pet it
+  const cat = game.cat;
+  zaddy.petting = cat && zaddy.dance <= 0 && Math.hypot(zaddy.x - cat.x, zaddy.y - cat.y) < 46;
+
+  zaddy.moving = !!(dx || dy) && zaddy.dance <= 0;
+  if (zaddy.moving){
+    const m = Math.hypot(dx,dy);
+    const sp = runSpeed() * mag * (game.carry ? .85 : 1) * (zaddy.petting ? .14 : 1);
+    zaddy.x += dx/m*sp*dt; zaddy.y += dy/m*sp*dt;
+    if (dx) zaddy.face = dx > 0 ? 1 : -1;
+    zaddy.dirY = dy;
+    zaddy.bob += dt*11;
+    if (game.legs < 40 && Math.random() < dt*.8) whine(WHINE_LEGS);
+  }
+  zaddy.x = Math.max(40, Math.min(W-40, zaddy.x));
+  zaddy.y = Math.max(FLOOR_TOP+55, Math.min(H-45, zaddy.y));
+
+  // the cat: gets pet, or wanders the floor on its own little errands
+  if (zaddy.petting){
+    cat.pauseT = Math.max(cat.pauseT, .5);            // it settles in to be loved
+    cat.face = zaddy.x < cat.x ? -1 : 1;
+    game.joy = Math.min(100, game.joy + dt * 30);     // petting fills the JOY bar
+    if (Math.random() < dt*7) game.hearts.push({ x: cat.x + (Math.random()-.5)*22, y: cat.y-14, vy: -32-Math.random()*22, life: 1.1 });
+    if (game.t - game.lastMeow > 4){ game.lastMeow = game.t; say(['Who\'s a good loaf-loaf? 😻','*purr* ...this counts as cardio, right?','The cat demands tribute. Worth it.'][Math.floor(Math.random()*3)], 2); }
+  } else if (cat.pauseT > 0){
+    cat.pauseT -= dt;                                  // sitting / grooming
+  } else {
+    const cdx = cat.tx - cat.x, cdy = cat.ty - cat.y, cd = Math.hypot(cdx, cdy);
+    if (cd < 8){
+      cat.pauseT = .8 + Math.random()*3;               // arrived — rest, then pick a new spot
+      cat.tx = 60 + Math.random()*(W-120);
+      cat.ty = (FLOOR_TOP+78) + Math.random()*(GYM_TOP - FLOOR_TOP - 100);
+    } else {
+      cat.x += cdx/cd*44*dt; cat.y += cdy/cd*44*dt;
+      cat.face = cdx < 0 ? -1 : 1;
+      cat.walk += dt*9;
+    }
+  }
+  // floating hearts drift up and fade
+  for (const h of game.hearts){ h.y += h.vy*dt; h.vy += 10*dt; h.life -= dt; }
+  game.hearts = game.hearts.filter(h => h.life > 0);
+
+  // passive decay
+  game.arms -= dt * 0.45;
+  game.legs -= dt * 0.45;
+  game.core -= dt * 0.55;
+  game.joy  -= dt * 1.4;     // joy fades fast without a little love
+
+  // starter: digests a feed on its own timer (like proofing), otherwise slowly starves
+  if (game.starterFeed){
+    game.starterFeed.p += dt * 14;                       // ~7s per feed
+    game.starter = Math.min(100, game.starter + dt * 6); // rises while digesting
+    if (game.starterFeed.p >= 100){
+      game.starterFeed = null;
+      game.starterReady = true;
+      say('Starter is STRONG! Grab a scoop [E] → carry it to the BOWL! 🫧', 3.5);
+    }
+  } else {
+    game.starter -= dt * 1.6;
+  }
+
+  // self-running stations
+  const d = game.doughs;
+  if (d.proof && !d.proof.ready){
+    d.proof.p += dt * 9;
+    if (d.proof.p >= 100){ d.proof.ready = true; say('A loaf is PROOFED! Grab it from the basket!'); }
+  }
+  if (d.oven){
+    d.oven.p += dt * 10;
+    if (d.oven.p > 115){
+      d.oven = null;
+      game.core -= 8; game.joy *= 0.5; game.flash = .6;
+      say('🔥 BURNT! Charcoal loaf. Heartbroken (-joy) and stress-snacking (-core)...', 4);
+    }
+  }
+
+  // crumbs
+  for (const c of game.crumbs){ c.x += c.vx*dt; c.y += c.vy*dt; c.vy += 300*dt; c.life -= dt; }
+  game.crumbs = game.crumbs.filter(c => c.life > 0);
+
+  // interaction
+  const e = interactPressed; interactPressed = false;
+  if (e){
+    // tossing ruined dough is checked first and only claims the press when actually
+    // carrying trash — so the trash can never blocks an overlapping station's action
+    if (game.carry === 'trash' && near(stations.trash)){
+      game.carry = null; say('Tossed the ruined batch. Live and learn. 🗑️', 2.5);
+    }
+    else if (near(stations.arms)){
+      game.arms = Math.min(100, game.arms + 8);
+      zaddy.workout = 'arms'; zaddy.workT = 1;
+      say(['Curls for the swirls! 💪','Biceps like baguettes!','Pump that crumb!'][Math.floor(Math.random()*3)], 1.4);
+    }
+    else if (near(stations.legs)){
+      game.legs = Math.min(100, game.legs + 8);
+      zaddy.workout = 'legs'; zaddy.workT = 1;
+      say(['Squat that sourdough! 🦵','Never skip leg day!','Quads of a proofing god!'][Math.floor(Math.random()*3)], 1.4);
+    }
+    else if (near(stations.core)){
+      game.core = Math.min(100, game.core + 8);
+      zaddy.workout = 'core'; zaddy.workT = 1;
+      say(['Crunches > crusts! 🔥','Abs are kneaded in the gym!','Core of steel, crumb of silk!'][Math.floor(Math.random()*3)], 1.4);
+    }
+    else if (near(stations.starter)){
+      if (game.carry === 'starter'){ game.carry = null; game.starterReady = true; game.starter = Math.min(100, game.starter + 12); say('Scoop back in the jar. No rush.'); }
+      else if (game.starterFeed){
+        if (game.carry) say('Hands full! Drop that first.');
+        else { game.starterFeed = null; game.carry = 'trash'; game.joy *= 0.5; game.flash = .5;
+               say('😱 Scooped it pre-aged! Flat, sour, useless. (-joy) Haul it to the TRASH. 🗑️', 4); }
+      }
+      else if (game.starterReady){
+        if (game.carry) say('Hands full! Drop that first.');
+        else { game.starterReady = false; game.starter = Math.max(0, game.starter - 12); game.carry = 'starter'; say('Scoop of bubbly starter in hand — to the BOWL!'); }
+      }
+      else { game.starterFeed = { p: 0 }; say('Flour & water in — now she rises on her own. 🫙'); }
+    }
+    else if (near(stations.mixer)){
+      if (!d.mixer){
+        if (game.carry === 'starter'){
+          game.carry = null;
+          d.mixer = { p: 0, ready: false };
+          say('Starter in the bowl — new batch! MASH E to mix!');
+        }
+        else if (game.carry === 'mixed'){ game.carry = null; d.mixer = { p: 100, ready: true }; say('Dough back in the bowl for now.'); }
+        else if (game.carry) say('That dough doesn\'t go back in the bowl!');
+        else say('The bowl needs a scoop of READY starter. Feed the jar!');
+      }
+      else if (game.carry === 'starter') say('The bowl is busy! One batch at a time.');
+      else if (!d.mixer.ready){
+        d.mixer.p += mixPower();           // ARMS drive the mixing
+        zaddy.workout = 'mix'; zaddy.workT = .6;
+        if (game.arms < 40) whine(WHINE_ARMS);
+        if (d.mixer.p >= 100){ d.mixer.ready = true; say('Shaggy dough! Pick it up [E] → KNEAD COUNTER.'); }
+      }
+      else if (!game.carry){ game.carry = 'mixed'; d.mixer = null; say('Got the dough! To the counter!'); }
+      else say('Hands full! Drop your dough first.');
+    }
+    else if (near(stations.knead)){
+      if (game.carry === 'mixed' && !d.knead){ game.carry = null; d.knead = { p: 0, ready: false }; say('Dough on the counter. KNEAD — mash E!'); }
+      else if (game.carry === 'kneaded' && !d.knead){ game.carry = null; d.knead = { p: 100, ready: true }; say('Set it back on the counter. It can wait.'); }
+      else if (game.carry === 'mixed' && d.knead) say('The counter is occupied! Finish that one first.');
+      else if (d.knead && !d.knead.ready){
+        d.knead.p += kneadPower();         // CORE drives the kneading
+        zaddy.workout = 'core'; zaddy.workT = .5;
+        if (game.core < 40) whine(WHINE_CORE);
+        if (d.knead.p >= 100){ d.knead.ready = true; say('Windowpane! Pick it up [E] → PROOFING BASKET.'); }
+      }
+      else if (d.knead && d.knead.ready && !game.carry){ game.carry = 'kneaded'; d.knead = null; say('Dough in hand. To the basket!'); }
+      else if (game.carry) say('That dough doesn\'t go here.');
+      else say('Nothing to knead.');
+    }
+    else if (near(stations.proof)){
+      if (game.carry === 'kneaded' && !d.proof){ game.carry = null; d.proof = { p: 0, ready: false }; say('Tucked in to proof. Go spin another plate!'); }
+      else if (game.carry === 'proofed' && !d.proof){ game.carry = null; d.proof = { p: 100, ready: true }; say('Back in the banneton, gently...'); }
+      else if (game.carry === 'kneaded' && d.proof) say('The basket is taken! One loaf at a time in there.');
+      else if (d.proof && !game.carry){
+        if (d.proof.ready){ game.carry = 'proofed'; d.proof = null; say('Careful... she\'s delicate. To the OVEN!'); }
+        else { d.proof = null; game.carry = 'trash'; game.joy *= 0.5; game.flash = .5;
+               say('😱 Yanked it mid-rise! Dead, flat dough. (-joy) Haul it to the TRASH. 🗑️', 4); }
+      }
+      else if (game.carry) say('That dough isn\'t ready for the basket.');
+      else say('The banneton sits empty.');
+    }
+    else if (near(stations.oven)){
+      if (game.carry === 'proofed' && !d.oven){ game.carry = null; d.oven = { p: 0 }; say('Loaf is in the oven! Don\'t let it BURN!'); }
+      else if (game.carry === 'proofed' && d.oven) say('Oven\'s full! Wait for that loaf to finish.');
+      else if (d.oven && !game.carry){
+        if (d.oven.p >= 75){
+          game.loaves++; d.oven = null;
+          game.core -= 10; game.arms -= 3; game.legs -= 3;
+          game.joy = 100;   // a perfect loaf is pure joy
+          for (let i=0;i<14;i++) game.crumbs.push({x:zaddy.x, y:zaddy.y-40, vx:(Math.random()-.5)*160, vy:-Math.random()*150, life:.8+Math.random()*.5});
+          // YEET the loaf off screen right, then celebrate
+          game.loaf = { x: zaddy.x, y: zaddy.y - 50, vx: 620, vy: -260, rot: 0 };
+          zaddy.dance = 2.5; zaddy.workout = null;
+          say('🍞 LOAF #' + game.loaves + '! YEET! 🕺 ...he still ate the heel mid-spin (-core)', 5);
+          if (game.loaves >= game.goal){ game.over = true; game.win = true; }
+        } else { d.oven = null; game.carry = 'trash'; game.joy *= 0.5; game.flash = .5;
+                 say('😱 Pulled it raw! Gummy, pale mess. (-joy) Haul it to the TRASH. 🗑️', 4); }
+      }
+      else if (game.carry) say('That dough isn\'t oven-ready yet.');
+      else say('The oven hums, empty and patient.');
+    }
+  }
+
+  // lose conditions
+  if (game.starter <= 0){ game.over = true; game.reason = 'Your starter DIED. 200-year-old culture, gone. 💀'; }
+  if (game.arms <= 0){ game.over = true; game.reason = 'His arms gave out mid-stir. Can\'t even lift the dutch oven. 🍝'; }
+  if (game.legs <= 0){ game.over = true; game.reason = 'Leg day was skipped one time too many. He cannot rise (unlike the dough). 🛋️'; }
+  if (game.core <= 0){ game.over = true; game.reason = 'The belly won. Full Bread DAD-BOD achieved. 🤰'; }
+  if (game.joy  <= 0){ game.over = true; game.reason = 'All work, no love. Zaddy lost the joy and hung up the apron. 😿'; }
+}
+
+// ---------- drawing ----------
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); }
+
+function draw(){
+  drawKitchen();
+  drawStarter(stations.starter);
+  drawMixer(stations.mixer);
+  drawKnead(stations.knead);
+  drawProof(stations.proof);
+  drawOven(stations.oven);
+  drawTrash(stations.trash);
+  drawGymZone();
+
+  // labels + prompts
+  ctx.textAlign = 'center';
+  for (const k in stations){
+    const s = stations[k];
+    ctx.fillStyle = s.zone==='gym' ? '#dce8f4' : '#5a4330';
+    ctx.font = 'bold 10px Trebuchet MS';
+    ctx.fillText(s.label, s.x+s.w/2, s.zone==='gym' ? GYM_TOP+32 : s.y - 6);
+    if (!game.over && near(s)){
+      const lbl = actionLabel(k);
+      if (lbl){
+        ctx.font = 'bold 11px Trebuchet MS';
+        const txt = '['+lbl+']', bw = ctx.measureText(txt).width + 12;
+        rr(s.x+s.w/2-bw/2, s.y+s.h+6, bw, 18, 5); ctx.fillStyle='#3a2c1c'; ctx.fill();
+        ctx.fillStyle = '#ffd966';
+        ctx.fillText(txt, s.x+s.w/2, s.y+s.h+19);
+      }
+    }
+  }
+
+  // crumbs
+  ctx.fillStyle = '#d9a85c';
+  for (const c of game.crumbs){ ctx.beginPath(); ctx.arc(c.x, c.y, 2.5, 0, 7); ctx.fill(); }
+
+  // the flying loaf
+  if (game.loaf){
+    const L = game.loaf;
+    ctx.save(); ctx.translate(L.x, L.y); ctx.rotate(L.rot);
+    ctx.fillStyle = '#c98a4a';
+    ctx.beginPath(); ctx.ellipse(0, 0, 22, 13, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#e8b87a';
+    ctx.beginPath(); ctx.ellipse(-4, -4, 12, 6, -.3, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#8a5f2e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(-2, 5); ctx.moveTo(-2, -6); ctx.lineTo(6, 2); ctx.stroke();
+    ctx.restore();
+    // speed lines behind it
+    ctx.strokeStyle = '#ffffff66'; ctx.lineWidth = 2;
+    for (let i=0;i<3;i++){
+      ctx.beginPath(); ctx.moveTo(L.x-30-i*14, L.y-6+i*6); ctx.lineTo(L.x-52-i*14, L.y-6+i*6); ctx.stroke();
+    }
+  }
+
+  // cat sits on the floor; draw before zaddy so he leans over it when petting
+  if (zaddy.y >= game.cat.y) { drawCat(); drawZaddy(zaddy.x, zaddy.y); }
+  else { drawZaddy(zaddy.x, zaddy.y); drawCat(); }
+
+  // floating love hearts
+  ctx.textAlign = 'center';
+  for (const h of game.hearts){
+    ctx.globalAlpha = Math.min(1, h.life);
+    ctx.fillStyle = '#e87ab0'; ctx.font = '15px Trebuchet MS';
+    ctx.fillText('♥', h.x, h.y);
+  }
+  ctx.globalAlpha = 1;
+
+  drawHUD();
+
+  if (game.flash > 0){ ctx.fillStyle = `rgba(255,80,0,${game.flash*.5})`; ctx.fillRect(0,0,W,H); }
+  if (game.over) drawEnd();
+}
+
+function drawKitchen(){
+  // wall with subtle vertical wallpaper stripes
+  ctx.fillStyle = '#e8d9b8'; ctx.fillRect(0,0,W,FLOOR_TOP+50);
+  ctx.fillStyle = '#e2d2ae';
+  for (let sx=0; sx<W; sx+=56) ctx.fillRect(sx, 0, 24, FLOOR_TOP+40);
+
+  // window: sky, sun w/ rays, drifting cloud, hills, bird, glass shine
+  ctx.save();
+  ctx.beginPath(); ctx.roundRect(360, 30, 180, 100, 8); ctx.clip();
+  const sky = ctx.createLinearGradient(0,30,0,130);
+  sky.addColorStop(0,'#8cc8e8'); sky.addColorStop(1,'#c8e4f0');
+  ctx.fillStyle = sky; ctx.fillRect(360,30,180,100);
+  ctx.fillStyle = '#ffd966'; ctx.beginPath(); ctx.arc(500, 60, 16, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#ffd96688'; ctx.lineWidth = 2;
+  for (let i=0;i<8;i++){ const a = i*Math.PI/4 + game.t*.2;
+    ctx.beginPath(); ctx.moveTo(500+Math.cos(a)*20, 60+Math.sin(a)*20); ctx.lineTo(500+Math.cos(a)*26, 60+Math.sin(a)*26); ctx.stroke(); }
+  ctx.fillStyle = '#fff';
+  const cdx = (game.t*4) % 240 - 30;
+  ctx.beginPath(); ctx.ellipse(360+cdx, 60, 22, 9, 0, 0, 7); ctx.ellipse(385+cdx, 55, 16, 7, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#7aa86a';
+  ctx.beginPath(); ctx.moveTo(360,130); ctx.quadraticCurveTo(420,95,480,130); ctx.quadraticCurveTo(510,108,540,130); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#6a9a5a';
+  ctx.beginPath(); ctx.moveTo(450,130); ctx.quadraticCurveTo(500,112,540,130); ctx.closePath(); ctx.fill();
+  const bx = 380 + ((game.t*14)%200), by = 48 + Math.sin(game.t*3)*4;
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(bx-5, by); ctx.quadraticCurveTo(bx-2, by-4, bx, by);
+  ctx.quadraticCurveTo(bx+2, by-4, bx+5, by); ctx.stroke();
+  ctx.strokeStyle = '#ffffff55'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(380,120); ctx.lineTo(440,40); ctx.moveTo(400,125); ctx.lineTo(455,52); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle = '#8a6a44'; ctx.lineWidth = 6; rr(360, 30, 180, 100, 8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(450,30); ctx.lineTo(450,130); ctx.moveTo(360,80); ctx.lineTo(540,80); ctx.stroke();
+  ctx.fillStyle = '#96743e'; rr(352, 130, 196, 8, 3); ctx.fill();
+  for (const [sx, dir] of [[344,1],[556,-1]]){
+    ctx.fillStyle = '#c46a5a';
+    ctx.beginPath(); ctx.moveTo(sx+dir*8,24); ctx.quadraticCurveTo(sx+dir*26,80,sx+dir*12,136);
+    ctx.lineTo(sx,136); ctx.lineTo(sx,24); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#a8503e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx+dir*6,30); ctx.quadraticCurveTo(sx+dir*16,80,sx+dir*8,130); ctx.stroke();
+  }
+  ctx.fillStyle = '#6a4a2a'; rr(336, 20, 228, 5, 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(336,22,5,0,7); ctx.arc(564,22,5,0,7); ctx.fill();
+
+  // shelf with jars, plant, bread box
+  ctx.fillStyle = '#8a6a44'; ctx.fillRect(60, 90, 200, 8);
+  ctx.fillStyle = '#6a4f30'; ctx.fillRect(60, 98, 200, 3);
+  ctx.fillStyle = '#b8d4c0'; rr(80, 62, 22, 28, 3); ctx.fill();
+  ctx.fillStyle = '#8aa896'; rr(80, 62, 22, 6, 3); ctx.fill();
+  ctx.fillStyle = '#f8f4ea'; ctx.fillRect(84, 74, 14, 9);
+  ctx.fillStyle = '#d9a85c'; rr(112, 68, 20, 22, 3); ctx.fill();
+  ctx.fillStyle = '#a87f42'; rr(112, 68, 20, 5, 3); ctx.fill();
+  ctx.fillStyle = '#c46a5a'; rr(150, 70, 18, 20, 9); ctx.fill();
+  ctx.fillStyle = '#a8503e'; rr(150, 70, 18, 5, 2); ctx.fill();
+  ctx.strokeStyle = '#5a8a4a'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(159,70); ctx.quadraticCurveTo(150,52,142,48); ctx.moveTo(159,70); ctx.quadraticCurveTo(162,50,172,44); ctx.moveTo(159,70); ctx.quadraticCurveTo(168,58,180,58); ctx.stroke();
+  ctx.fillStyle = '#5a8a4a';
+  ctx.beginPath(); ctx.ellipse(142,48,4,2.5,.6,0,7); ctx.ellipse(172,44,4,2.5,-.6,0,7); ctx.ellipse(180,58,4,2.5,.2,0,7); ctx.fill();
+  ctx.fillStyle = '#e9c46a'; rr(200, 64, 26, 26, 4); ctx.fill();
+  ctx.fillStyle = '#c89a3a'; rr(200, 64, 26, 8, 4); ctx.fill();
+  ctx.fillStyle = '#8a6a2a'; ctx.beginPath(); ctx.arc(213, 80, 2.5, 0, 7); ctx.fill();
+
+  // framed bread art
+  ctx.fillStyle = '#6a4a2a'; rr(566, 44, 44, 54, 3); ctx.fill();
+  ctx.fillStyle = '#f0e6d0'; rr(571, 49, 34, 44, 2); ctx.fill();
+  ctx.fillStyle = '#c89455'; ctx.beginPath(); ctx.ellipse(588, 74, 13, 8, -.4, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#8a5f2e'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(580,70); ctx.lineTo(587,78); ctx.moveTo(586,66); ctx.lineTo(593,74); ctx.stroke();
+
+  // hanging utensil rail
+  ctx.strokeStyle = '#8a6a44'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(630, 60); ctx.lineTo(870, 60); ctx.stroke();
+  ctx.fillStyle = '#6a4f30';
+  ctx.beginPath(); ctx.arc(630,60,4,0,7); ctx.arc(870,60,4,0,7); ctx.fill();
+  const utensils = [655, 700, 745, 795, 845];
+  utensils.forEach((ux,i)=>{
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(ux, 60); ctx.lineTo(ux, 76); ctx.stroke();
+    if (i===0){
+      ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
+      for (let w=-1; w<=1; w++){ ctx.beginPath(); ctx.moveTo(ux,76); ctx.quadraticCurveTo(ux+w*7,90,ux,102); ctx.stroke(); }
+    } else if (i===1){
+      ctx.fillStyle = '#b8845a'; ctx.fillRect(ux-2, 76, 4, 18);
+      ctx.beginPath(); ctx.ellipse(ux, 100, 6, 9, 0, 0, 7); ctx.fill();
+    } else if (i===2){
+      ctx.fillStyle = '#999'; ctx.fillRect(ux-2, 76, 4, 14);
+      rr(ux-7, 90, 14, 14, 3); ctx.fill();
+    } else if (i===3){
+      ctx.strokeStyle = '#999'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(ux,76); ctx.lineTo(ux,92); ctx.stroke();
+      ctx.fillStyle = '#999'; ctx.beginPath(); ctx.arc(ux, 97, 7, 0, Math.PI); ctx.fill();
+    } else {
+      ctx.fillStyle = '#b8845a'; rr(ux-8, 76, 16, 26, 6); ctx.fill();
+      ctx.fillStyle = '#caa472'; ctx.beginPath(); ctx.arc(ux, 81, 2, 0, 7); ctx.fill();
+    }
+  });
+
+  // wall clock
+  ctx.fillStyle = '#f8f4ea'; ctx.beginPath(); ctx.arc(300, 60, 20, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#5a4330'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(300, 60, 20, 0, 7); ctx.stroke();
+  ctx.lineWidth = 1.5;
+  for (let i=0;i<12;i++){ const a=i*Math.PI/6;
+    ctx.beginPath(); ctx.moveTo(300+Math.cos(a)*16, 60+Math.sin(a)*16); ctx.lineTo(300+Math.cos(a)*18, 60+Math.sin(a)*18); ctx.stroke(); }
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(300,60); ctx.lineTo(300+10*Math.cos(game.t*.3), 60+10*Math.sin(game.t*.3)); ctx.moveTo(300,60); ctx.lineTo(300+6*Math.cos(game.t*.05-1.5), 60+6*Math.sin(game.t*.05-1.5)); ctx.stroke();
+  ctx.fillStyle = '#5a4330'; ctx.beginPath(); ctx.arc(300,60,2.5,0,7); ctx.fill();
+
+  // tile backsplash
+  ctx.fillStyle = '#d8e0d8'; ctx.fillRect(0, FLOOR_TOP-44, W, 44);
+  ctx.strokeStyle = '#b8c4b8'; ctx.lineWidth = 1.5;
+  for (let tx=0; tx<W; tx+=30){ ctx.beginPath(); ctx.moveTo(tx, FLOOR_TOP-44); ctx.lineTo(tx, FLOOR_TOP); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(0, FLOOR_TOP-22); ctx.lineTo(W, FLOOR_TOP-22); ctx.stroke();
+
+  // counter lip + floor planks
+  ctx.fillStyle = '#d8c49a'; ctx.fillRect(0,FLOOR_TOP+40,W,14);
+  ctx.fillStyle = '#b89a6a'; ctx.fillRect(0,FLOOR_TOP+52,W,3);
+  ctx.fillStyle = '#b07b48'; ctx.fillRect(0,FLOOR_TOP+55,W,H);
+  for(let i=0;i<8;i++){
+    ctx.fillStyle = i%2?'#a8744296':'#ba835196'; ctx.fillRect(0,FLOOR_TOP+55+i*40,W,40);
+    ctx.strokeStyle = '#96652e44'; ctx.lineWidth=1;
+    for (let px = (i%2)*60; px < W; px += 180){
+      ctx.beginPath(); ctx.moveTo(px, FLOOR_TOP+55+i*40); ctx.lineTo(px, FLOOR_TOP+95+i*40); ctx.stroke();
+    }
+  }
+  // rug with fringe
+  ctx.fillStyle = '#a85a4a'; rr(330, 300, 240, 110, 50); ctx.fill();
+  ctx.strokeStyle = '#c98a6a'; ctx.lineWidth=5; rr(345, 312, 210, 86, 40); ctx.stroke();
+  ctx.strokeStyle = '#e8c49a'; ctx.lineWidth=2; rr(360, 324, 180, 62, 30); ctx.stroke();
+  ctx.strokeStyle = '#c98a6a'; ctx.lineWidth=2;
+  for (let fy=308; fy<=402; fy+=12){
+    ctx.beginPath(); ctx.moveTo(326,fy); ctx.lineTo(318,fy); ctx.moveTo(574,fy); ctx.lineTo(582,fy); ctx.stroke();
+  }
+}
+
+// ---- the man himself ----
+function drawZaddy(x, y){
+  const bCore = flab(game.core), bArms = flab(game.arms), bLegs = flab(game.legs);
+  const back = zaddy.dirY < 0 && zaddy.moving;
+  const bob = zaddy.moving ? Math.sin(zaddy.bob)*3 : 0;
+  const step = zaddy.moving ? Math.sin(zaddy.bob*1.6) : 0;
+  const wo = zaddy.workout, wt = zaddy.workT;
+  const squat = wo==='legs' ? Math.sin(wt*Math.PI)*14 : 0;
+  const crunchTilt = wo==='core' ? Math.sin(wt*Math.PI)*.35 : 0;
+
+  ctx.save();
+  ctx.translate(x, y + bob + squat);
+  if (zaddy.dance > 0){
+    // BREAKDANCE in three acts: toprock → windmill → freeze
+    const ph = 2.5 - zaddy.dance;
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.ellipse(0, 78, 36, 8, 0, 0, 7); ctx.fill();
+    // toprock: bouncy side-to-side strut, slight lean into each step
+    ctx.translate(Math.sin(ph*15)*8, -Math.abs(Math.sin(ph*15))*12);
+    ctx.rotate(Math.sin(ph*15)*.2);
+  }
+  ctx.scale(zaddy.face, 1);
+  ctx.rotate(crunchTilt * zaddy.face);
+
+  // shadow
+  if (zaddy.dance <= 0){
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.ellipse(0, 78 - bob - squat, 30+10*bCore, 8, 0, 0, 7); ctx.fill();
+  }
+
+  const skin = '#e8b48f', skinD = '#d49a73';
+  const legW = 18 + 9*bLegs;
+
+  // legs: gray joggers with seams
+  ctx.fillStyle = '#5a6470';
+  rr(-22-5*bLegs + step*4, 18, legW, 42 - squat*.5, 7); ctx.fill();
+  rr(5 - step*4, 18, legW, 42 - squat*.5, 7); ctx.fill();
+  ctx.strokeStyle = '#6e7a88'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-13-5*bLegs+step*4, 22); ctx.lineTo(-13-5*bLegs+step*4, 52);
+  ctx.moveTo(14-step*4, 22); ctx.lineTo(14-step*4, 52); ctx.stroke();
+  // striped socks
+  for (const [lx] of [[-20-5*bLegs + step*4],[7 - step*4]]){
+    ctx.fillStyle = '#4a4f5a'; rr(lx, 56 - squat*.5, legW-1, 14, 4); ctx.fill();
+    ctx.fillStyle = '#b04050'; ctx.fillRect(lx, 59 - squat*.5, legW-1, 3);
+    ctx.fillStyle = '#e8e0d0'; ctx.fillRect(lx, 64 - squat*.5, legW-1, 2);
+  }
+  // waistband + drawstring
+  ctx.fillStyle = '#4a525c'; rr(-24-7*bCore, 12, 48+14*bCore, 12, 5); ctx.fill();
+  if (!back){
+    ctx.strokeStyle = '#9aa4ae'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-4,16); ctx.lineTo(-7,28); ctx.moveTo(2,16); ctx.lineTo(5,30); ctx.stroke();
+  }
+
+  // torso with side shading
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.ellipse(0, -8, 24 + 14*bCore, 32 + 6*bCore, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(180,120,80,.18)';
+  ctx.beginPath(); ctx.ellipse(8+5*bCore, -8, 13 + 8*bCore, 30 + 6*bCore, 0, -1.2, 1.2); ctx.fill();
+  if (bCore > .3){ ctx.strokeStyle = skinD; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0, 14, 14*bCore+6, .3, Math.PI-.3); ctx.stroke(); }
+
+  if (back){
+    ctx.strokeStyle = '#3a2e26'; ctx.lineWidth = 1.4;
+    for (let i=0;i<10;i++){
+      const hx = -12 + (i%5)*6, hy2 = -28 + Math.floor(i/5)*10;
+      ctx.beginPath(); ctx.moveTo(hx, hy2); ctx.quadraticCurveTo(hx+2, hy2+3, hx-1, hy2+6); ctx.stroke();
+    }
+  } else {
+    ctx.strokeStyle = '#3a2e26'; ctx.lineWidth = 1.4;
+    for (let i=0;i<14;i++){
+      const hx = -14 + (i%5)*7 + ((i*7)%3), hy2 = -26 + Math.floor(i/5)*8;
+      ctx.beginPath(); ctx.moveTo(hx, hy2); ctx.quadraticCurveTo(hx+2, hy2+3, hx-1, hy2+6); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(0,2); ctx.quadraticCurveTo(2,7,0,12); ctx.stroke();
+    ctx.fillStyle = '#c87868';
+    ctx.beginPath(); ctx.arc(-13, -18, 2.4, 0, 7); ctx.arc(13, -18, 2.4, 0, 7); ctx.fill();
+    ctx.strokeStyle = skinD; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(0, 13, 2, 0, Math.PI); ctx.stroke();
+  }
+
+  // arms
+  ctx.strokeStyle = skin; ctx.lineWidth = 9 + 6*bArms; ctx.lineCap = 'round';
+  const armY = -22;
+  if (zaddy.dance > 0 && !game.carry){
+    const ph = 2.5 - zaddy.dance;
+    // arms pumping overhead on alternate beats
+    const wv = Math.sin(ph*15);
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-34, -40, -28, -56 - wv*10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(34, -40, 28, -56 + wv*10); ctx.stroke();
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(-28, -56 - wv*10, 5, 0, 7); ctx.arc(28, -56 + wv*10, 5, 0, 7); ctx.fill();
+  }
+  else if (game.carry && !wo){
+    // both hands cradling the dough at the belly — signature pose
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-26, -10, -8, -2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(26, -10, 8, -2); ctx.stroke();
+    const wob = 1 + Math.sin(game.t*6)*.04;
+    if (game.carry === 'starter'){
+      // a wet, drippy scoop of starter — smaller and gloopier than dough
+      ctx.fillStyle = '#f2e6c4';
+      ctx.beginPath(); ctx.ellipse(0, -4, 11*wob, 8/wob, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#e6d5a8';
+      const drip = (game.t*30) % 14;
+      ctx.beginPath(); ctx.arc(3, 4 + drip*.6, 2, 0, 7); ctx.fill();
+    } else if (game.carry === 'trash'){
+      // a sad ruined lump — grey-brown, lopsided, held at arm's length-ish
+      ctx.fillStyle = '#7c6a52';
+      ctx.beginPath(); ctx.ellipse(0, -4, 14, 10, .2, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5e503e';
+      ctx.beginPath(); ctx.arc(-5, -6, 3, 0, 7); ctx.arc(4, -2, 2.5, 0, 7); ctx.fill();
+      // stink wisps
+      ctx.strokeStyle = 'rgba(150,170,120,.5)'; ctx.lineWidth = 1.5;
+      for (let i=0;i<2;i++){ const ph=(game.t*1.5+i)%2;
+        ctx.globalAlpha=1-ph/2; ctx.beginPath(); ctx.moveTo(-6+i*12, -14-ph*8); ctx.quadraticCurveTo(-2+i*12, -18-ph*8, -6+i*12, -22-ph*8); ctx.stroke(); ctx.globalAlpha=1; }
+    } else {
+      ctx.fillStyle = '#efe3c0';
+      ctx.beginPath(); ctx.ellipse(0, -4, 16*wob, 12/wob, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#d8c49a'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, -6, 8, .4, Math.PI-.4); ctx.stroke();
+    }
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(-11, -2, 5, 0, 7); ctx.arc(11, -2, 5, 0, 7); ctx.fill();
+  } else if (zaddy.petting){
+    // bends down to give the kitty some pats
+    const pat = Math.abs(Math.sin(game.t*9))*6;
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-28, 2, -22, 16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(30, 6, 24, 30 - pat); ctx.stroke();
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(24, 30 - pat, 5, 0, 7); ctx.fill();
+  } else if (wo === 'mix'){
+    // stirring: left hand steadies an imaginary bowl rim, right hand whips a spoon in circles
+    const sa = game.t * 14;                      // stir angle
+    const hx = 14 + Math.cos(sa) * 7, hyS = -34 + Math.sin(sa) * 4;
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-30, -34, -16, -40); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(30, -32, hx, hyS); ctx.stroke();
+    // wooden spoon in the stirring hand
+    ctx.save(); ctx.translate(hx, hyS); ctx.rotate(Math.sin(sa)*.5 - .4);
+    ctx.fillStyle = '#b8845a'; ctx.fillRect(-2, -20, 4, 22);
+    ctx.beginPath(); ctx.ellipse(0, -22, 4, 6, 0, 0, 7); ctx.fill();
+    ctx.restore();
+    // hands
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(-16, -40, 5, 0, 7); ctx.arc(hx, hyS, 5, 0, 7); ctx.fill();
+    // flour puffs flying off the stir
+    ctx.fillStyle = '#fff9';
+    for (let i=0;i<3;i++){
+      const pa = sa + i*2.1;
+      ctx.beginPath(); ctx.arc(8 + Math.cos(pa)*16, -38 + Math.sin(pa)*9, 2 + (i%2), 0, 7); ctx.fill();
+    }
+  } else if (wo === 'arms'){
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-32, -44, -24, -58); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(32, -44, 24, -58); ctx.stroke();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-38, -60); ctx.lineTo(38, -60); ctx.stroke();
+    ctx.fillStyle = '#333';
+    ctx.beginPath(); ctx.arc(-38,-60,7,0,7); ctx.arc(38,-60,7,0,7); ctx.fill();
+  } else if (wo === 'core'){
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-26, -46, -10, -52); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(26, -46, 10, -52); ctx.stroke();
+  } else {
+    const sag = 4*bArms;
+    ctx.beginPath(); ctx.moveTo(-20-10*bCore, armY); ctx.quadraticCurveTo(-30-8*bCore, -6+sag, -26-6*bCore, 8+sag); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20+10*bCore, armY);  ctx.quadraticCurveTo(30+8*bCore, -6+sag, 26+6*bCore, 8+sag); ctx.stroke();
+  }
+  // sweat while working out
+  if (wo){
+    ctx.fillStyle = '#9ed0e8';
+    for (let i=0;i<3;i++){
+      const sx = -24 + i*22, sy = -66 - (wt*18 + i*5)%22;
+      ctx.beginPath(); ctx.arc(sx, sy, 2.4, 0, 7); ctx.fill();
+    }
+  }
+
+  // head
+  const hy = -52;
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(0, hy, 17, 0, 7); ctx.fill();
+  ctx.fillStyle = '#f4c9a4';
+  ctx.beginPath(); ctx.ellipse(-5, hy-9, 6, 3.5, -.5, 0, 7); ctx.fill();
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(-16, hy+2, 4, 0, 7); ctx.arc(16, hy+2, 4, 0, 7); ctx.fill();
+
+  if (back){
+    ctx.fillStyle = '#2e2620';
+    ctx.beginPath(); ctx.moveTo(-16, hy+5); ctx.quadraticCurveTo(0, hy+21, 16, hy+5);
+    ctx.quadraticCurveTo(0, hy+13, -16, hy+5); ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(-15, hy+8, 4, 7, .3, 0, 7); ctx.ellipse(15, hy+8, 4, 7, -.3, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#1e1a16'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-15, hy-2); ctx.lineTo(-11, hy-2); ctx.moveTo(15, hy-2); ctx.lineTo(11, hy-2); ctx.stroke();
+  } else {
+    // BEARD with texture
+    ctx.fillStyle = '#2e2620';
+    ctx.beginPath();
+    ctx.moveTo(-15, hy+2);
+    ctx.quadraticCurveTo(-18, hy+22, 0, hy+30);
+    ctx.quadraticCurveTo(18, hy+22, 15, hy+2);
+    ctx.quadraticCurveTo(8, hy+8, 0, hy+8);
+    ctx.quadraticCurveTo(-8, hy+8, -15, hy+2);
+    ctx.fill();
+    ctx.strokeStyle = '#453830'; ctx.lineWidth = 1.2;
+    for (let i=-2;i<=2;i++){
+      ctx.beginPath(); ctx.moveTo(i*5, hy+12); ctx.quadraticCurveTo(i*5+1, hy+18, i*4, hy+24); ctx.stroke();
+    }
+    ctx.fillStyle = '#2e2620';
+    ctx.beginPath(); ctx.ellipse(0, hy+9, 9, 4, 0, 0, 7); ctx.fill();
+    const gx = zaddy.moving && !zaddy.dirY ? 3 : 0;
+    ctx.strokeStyle = '#1e1a16'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(-7+gx, hy-2, 6, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(7+gx, hy-2, 6, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-1+gx, hy-2); ctx.lineTo(1+gx, hy-2); ctx.stroke();
+    ctx.fillStyle = 'rgba(200,230,220,.45)';
+    ctx.beginPath(); ctx.arc(-7+gx, hy-2, 5, 0, 7); ctx.arc(7+gx, hy-2, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(-7+gx+1, hy-2, 1.7, 0, 7); ctx.arc(7+gx+1, hy-2, 1.7, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#2e2620'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(-12+gx, hy-9); ctx.lineTo(-3+gx, hy-7); ctx.moveTo(3+gx, hy-7); ctx.lineTo(12+gx, hy-9); ctx.stroke();
+  }
+  ctx.restore();
+
+  // breakdance hype: orbiting stars + music notes
+  if (zaddy.dance > 0){
+    ctx.textAlign = 'center';
+    for (let i=0;i<5;i++){
+      const a = game.t*3 + i*1.26;
+      const sx = x + Math.cos(a)*62, sy = y + 10 + Math.sin(a)*34;
+      ctx.font = (14 + (i%3)*4)+'px Trebuchet MS';
+      ctx.fillStyle = ['#ffd966','#9ed0e8','#f0c060'][i%3];
+      ctx.fillText(['✦','♪','★','♫','✧'][i], sx, sy);
+    }
+    ctx.fillStyle = '#ffd966'; ctx.font = 'bold 13px Trebuchet MS';
+    ctx.fillText('🔥 FRESH LOAF 🔥', x, y - 86);
+  }
+}
+
+// ---- kitchen station art ----
+function drawStarter(s){
+  ctx.fillStyle = '#d8c49a'; ctx.fillRect(s.x, s.y+s.h-12, s.w, 12);
+  const jx = s.x+s.w/2, lvl = Math.max(0, game.starter)/100;
+  ctx.fillStyle = 'rgba(220,235,240,.7)'; rr(jx-22, s.y+8, 44, 58, 6); ctx.fill();
+  ctx.fillStyle = '#e9ddba';
+  ctx.fillRect(jx-19, s.y+12+50*(1-lvl), 38, 50*lvl);
+  ctx.fillStyle = '#fdf6e0';
+  for(let i=0;i<5;i++){
+    const bx = jx-14+i*7, by = s.y+20+50*(1-lvl) + ((game.t*30+i*17)%30);
+    if (by < s.y+60) { ctx.beginPath(); ctx.arc(bx, by, 2, 0, 7); ctx.fill(); }
+  }
+  ctx.strokeStyle = '#ffffff88'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(jx-16, s.y+16); ctx.lineTo(jx-16, s.y+56); ctx.stroke();
+  ctx.strokeStyle = '#8aa'; ctx.lineWidth=2; rr(jx-22, s.y+8, 44, 58, 6); ctx.stroke();
+  ctx.strokeStyle = '#c46a5a'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(jx-22, s.y+34); ctx.lineTo(jx+22, s.y+34); ctx.stroke();
+  ctx.fillStyle = '#c33'; rr(jx-24, s.y+2, 48, 8, 3); ctx.fill();
+  ctx.fillStyle = '#f8f4ea'; rr(jx+8, s.y+40, 13, 16, 2); ctx.fill();
+  ctx.fillStyle = '#5a4330'; ctx.font='7px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('BUB', jx+14.5, s.y+50);
+  if (game.starterFeed){
+    // frothy overdrive while digesting + its own timer meter (like proofing)
+    ctx.fillStyle = '#fdf6e0';
+    for(let i=0;i<7;i++){
+      const fx = jx-18+i*6, fy = s.y+62 - ((game.t*55+i*23)%52);
+      if (fy > s.y+12){ ctx.beginPath(); ctx.arc(fx, fy, 2.6, 0, 7); ctx.fill(); }
+    }
+    ctx.fillStyle = '#5a4330'; ctx.font='bold 10px Trebuchet MS';
+    ctx.fillText('NOM NOM...', jx, s.y-14);
+    meter(s.x, s.y+s.h+26, s.w, game.starterFeed.p, '#5ac8e8');
+  } else {
+    if (game.starterReady){
+      // ripe scoop bulging out of the jar, ready to carry
+      const wob = 1 + Math.sin(game.t*5)*.08;
+      ctx.fillStyle = '#f2e6c4';
+      ctx.beginPath(); ctx.ellipse(jx, s.y+6, 14*wob, 9/wob, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#5a4330'; ctx.font='bold 11px Trebuchet MS';
+      ctx.fillText('TAKE ME!', jx, s.y-14);
+    }
+    meter(s.x, s.y+s.h+26, s.w, game.starter, game.starter<25 ? '#d33' : '#7a5');
+  }
+}
+function drawMixer(s){
+  ctx.fillStyle = '#d8c49a'; ctx.fillRect(s.x, s.y+s.h-12, s.w, 12);
+  const cx = s.x+s.w/2, dough = game.doughs.mixer;
+  ctx.fillStyle = '#7a8aa0';
+  ctx.beginPath(); ctx.moveTo(cx-32, s.y+24); ctx.quadraticCurveTo(cx, s.y+78, cx+32, s.y+24); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#8e9eb4'; rr(cx-34, s.y+21, 68, 7, 3); ctx.fill();
+  ctx.fillStyle = '#5e6e84';
+  ctx.beginPath(); ctx.moveTo(cx+6, s.y+28); ctx.quadraticCurveTo(cx+20, s.y+58, cx+28, s.y+28); ctx.closePath(); ctx.fill();
+  if (dough && !dough.ready){
+    const slosh = Math.sin(game.t*10)*3;
+    ctx.fillStyle = '#e9ddba';
+    ctx.beginPath(); ctx.ellipse(cx+slosh, s.y+30, 22, 7, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#dccfa6';
+    ctx.beginPath(); ctx.arc(cx-8+slosh, s.y+28, 4, 0, 7); ctx.arc(cx+7+slosh, s.y+31, 5, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(cx+10, s.y+28); ctx.rotate(.5 + Math.sin(game.t*10)*.15);
+    ctx.fillStyle = '#b8845a'; ctx.fillRect(-2, -26, 4, 26);
+    ctx.restore();
+    meter(s.x, s.y+s.h+26, s.w, dough.p, '#c90');
+  }
+  if (dough && dough.ready){
+    const wob = 1 + Math.sin(game.t*4)*.05;
+    ctx.fillStyle = '#e9ddba';
+    ctx.beginPath(); ctx.ellipse(cx, s.y+28, 20*wob, 11/wob, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5a4330'; ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('TAKE ME!', cx, s.y+8);
+  }
+  ctx.fillStyle = '#f0e6d0'; rr(s.x+2, s.y+30, 22, 34, 3); ctx.fill();
+  ctx.strokeStyle = '#d8c8a8'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(s.x+4, s.y+38); ctx.lineTo(s.x+22, s.y+38); ctx.stroke();
+  ctx.fillStyle = '#85b'; ctx.font='9px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('FLOUR', s.x+13, s.y+50);
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(s.x+13, s.y+31, 9, 3, 0, Math.PI, 0); ctx.fill();
+}
+function drawKnead(s){
+  const dough = game.doughs.knead;
+  ctx.fillStyle = '#caa05c'; rr(s.x, s.y+20, s.w, s.h-20, 6); ctx.fill();
+  ctx.fillStyle = '#b8904a'; rr(s.x, s.y+20, s.w, 6, 3); ctx.fill();
+  ctx.strokeStyle = '#a87f42'; ctx.lineWidth=1;
+  for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(s.x+i*s.w/4, s.y+26); ctx.lineTo(s.x+i*s.w/4, s.y+s.h-4); ctx.stroke(); }
+  ctx.fillStyle = '#fff8'; ctx.beginPath(); ctx.ellipse(s.x+s.w/2, s.y+44, 30, 8, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fffc';
+  for (let i=0;i<6;i++){ ctx.beginPath(); ctx.arc(s.x+24+i*15, s.y+40+(i%3)*6, 1.5, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#b8845a'; rr(s.x+s.w-34, s.y+6, 30, 8, 4); ctx.fill();
+  ctx.fillStyle = '#96623e'; rr(s.x+s.w-40, s.y+7, 8, 6, 3); ctx.fill(); rr(s.x+s.w-6, s.y+7, 8, 6, 3); ctx.fill();
+  ctx.fillStyle = '#999'; rr(s.x+6, s.y+8, 16, 12, 2); ctx.fill();
+  ctx.fillStyle = '#c46a5a'; rr(s.x+8, s.y+4, 12, 5, 2); ctx.fill();
+  if (dough && !dough.ready){
+    const squish = 1 + Math.sin(game.t*8)*.12;
+    ctx.fillStyle = '#e9ddba';
+    ctx.beginPath(); ctx.ellipse(s.x+s.w/2, s.y+38, 18*squish, 13/squish, 0, 0, 7); ctx.fill();
+    meter(s.x, s.y+s.h+26, s.w, dough.p, '#c90');
+  }
+  if (dough && dough.ready){
+    const wob = 1 + Math.sin(game.t*4)*.05;
+    ctx.fillStyle = '#e9ddba';
+    ctx.beginPath(); ctx.ellipse(s.x+s.w/2, s.y+36, 18*wob, 13/wob, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5a4330'; ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('TAKE ME!', s.x+s.w/2, s.y+14);
+  }
+}
+function drawProof(s){
+  const dough = game.doughs.proof;
+  ctx.fillStyle = '#d8c49a'; ctx.fillRect(s.x, s.y+s.h-12, s.w, 12);
+  const cx = s.x+s.w/2;
+  ctx.fillStyle = '#b8915a';
+  ctx.beginPath(); ctx.moveTo(cx-32, s.y+34); ctx.quadraticCurveTo(cx, s.y+74, cx+32, s.y+34); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#96713e'; ctx.lineWidth=2;
+  for(let i=0;i<3;i++){ ctx.beginPath(); ctx.ellipse(cx, s.y+38+i*9, 30-i*6, 5, 0, 0, Math.PI); ctx.stroke(); }
+  ctx.fillStyle = '#dce8f4'; rr(s.x+2, s.y+52, 24, 18, 3); ctx.fill();
+  ctx.strokeStyle = '#a0b8d0'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(s.x+2, s.y+58); ctx.lineTo(s.x+26, s.y+58); ctx.moveTo(s.x+2, s.y+64); ctx.lineTo(s.x+26, s.y+64); ctx.stroke();
+  if (dough && !dough.ready){
+    const r = 12 + 14*(dough.p/100);
+    ctx.fillStyle = '#efe3c0'; ctx.beginPath(); ctx.ellipse(cx, s.y+34, r+8, r*.6, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#fdf6e0';
+    for (let i=0;i<3;i++){
+      const py = s.y+18 - ((game.t*12+i*9)%24);
+      ctx.beginPath(); ctx.arc(cx-12+i*12, py, 1.8, 0, 7); ctx.fill();
+    }
+    meter(s.x, s.y+s.h+26, s.w, dough.p, '#7a5');
+  }
+  if (dough && dough.ready){
+    const wob = 1 + Math.sin(game.t*4)*.05;
+    ctx.fillStyle = '#efe3c0'; ctx.beginPath(); ctx.ellipse(cx, s.y+30, 26*wob, 16/wob, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#5a4330'; ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('TAKE ME!', cx, s.y+12);
+  }
+}
+function drawOven(s){
+  const dough = game.doughs.oven;
+  ctx.fillStyle = '#3c4048'; rr(s.x, s.y, s.w, s.h, 6); ctx.fill();
+  ctx.fillStyle = '#4a4f58'; rr(s.x, s.y, s.w, 8, 6); ctx.fill();
+  ctx.fillStyle = '#23262c'; rr(s.x+10, s.y+24, s.w-20, s.h-38, 5); ctx.fill();
+  ctx.fillStyle = '#8a929e'; rr(s.x+16, s.y+30, s.w-32, 4, 2); ctx.fill();
+  ctx.strokeStyle = '#ffffff22'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(s.x+18, s.y+s.h-22); ctx.lineTo(s.x+40, s.y+38); ctx.stroke();
+  for(let i=0;i<3;i++){
+    ctx.fillStyle = '#9aa'; ctx.beginPath(); ctx.arc(s.x+24+i*22, s.y+14, 5, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#3c4048'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(s.x+24+i*22, s.y+14); ctx.lineTo(s.x+24+i*22, s.y+10); ctx.stroke();
+  }
+  ctx.fillStyle = '#23262c'; ctx.fillRect(s.x+6, s.y+s.h, 10, 5); ctx.fillRect(s.x+s.w-16, s.y+s.h, 10, 5);
+  if (dough){
+    const done = dough.p/75, burn = dough.p > 100;
+    ctx.fillStyle = burn ? '#2a1408' : `rgb(${180+40*Math.sin(game.t*6)},${90+30*done},30)`;
+    rr(s.x+14, s.y+38, s.w-28, s.h-56, 4); ctx.fill();
+    const shade = Math.min(1, done);
+    ctx.fillStyle = burn ? '#1a0d05' : `rgb(${235-90*shade},${215-110*shade},${160-110*shade})`;
+    ctx.beginPath(); ctx.ellipse(s.x+s.w/2, s.y+s.h-26, 24, 13, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = burn ? 'rgba(60,60,60,.7)' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 3;
+    for (let i=0;i<3;i++){
+      const ph = (game.t*1.5 + i) % 2, sx = s.x+30+i*25, sy = s.y - 4 - ph*22;
+      ctx.globalAlpha = 1 - ph/2;
+      ctx.beginPath(); ctx.moveTo(sx, sy+12); ctx.quadraticCurveTo(sx+5, sy+6, sx, sy); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    meter(s.x, s.y+s.h+26, s.w, Math.min(dough.p,115)/115*100, dough.p>90 ? '#d33' : '#e80');
+    if (dough.p >= 75 && !burn){ ctx.fillStyle='#ffd966'; ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText(dough.p>95?'NOW!! 🔥':'DONE — pull it!', s.x+s.w/2, s.y-26); }
+  }
+}
+
+// ---- gym zone ----
+function drawGymZone(){
+  ctx.fillStyle = '#3e4a58'; ctx.fillRect(0, GYM_TOP, W, H-GYM_TOP);
+  ctx.strokeStyle = '#4e5c6c'; ctx.lineWidth = 1;
+  for (let gx=0; gx<W; gx+=45){ ctx.beginPath(); ctx.moveTo(gx, GYM_TOP); ctx.lineTo(gx, H); ctx.stroke(); }
+  ctx.fillStyle = '#dce8f4'; ctx.font = 'bold 12px Trebuchet MS'; ctx.textAlign='left';
+  ctx.fillText('🏋️ ZADDY\'S HOME GYM', 12, GYM_TOP+16);
+  ctx.fillStyle = '#2e3742'; ctx.fillRect(0, GYM_TOP, W, 4);
+  ctx.fillStyle = '#5ac8e8'; rr(310, 530, 12, 28, 4); ctx.fill();
+  ctx.fillStyle = '#3a9ab8'; rr(312, 524, 8, 8, 2); ctx.fill();
+  ctx.fillStyle = '#f0e6d0'; rr(580, 540, 46, 12, 4); ctx.fill();
+  ctx.strokeStyle = '#d8c8a8'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(584, 546); ctx.lineTo(622, 546); ctx.stroke();
+  ctx.fillStyle = '#28303a'; rr(250, 555, 44, 24, 4); ctx.fill();
+  ctx.fillStyle = '#5ac86a';
+  ctx.beginPath(); ctx.arc(261, 567, 7, 0, 7); ctx.arc(283, 567, 7, 0, 7); ctx.fill();
+  ctx.fillStyle = '#28303a';
+  ctx.beginPath(); ctx.arc(261, 567, 3, 0, 7); ctx.arc(283, 567, 3, 0, 7); ctx.fill();
+  ctx.fillStyle = '#9ed0e8'; ctx.font = '12px Trebuchet MS';
+  ctx.fillText('♪', 296, 552 - (game.t*10%14));
+  ctx.fillText('♫', 240, 548 - ((game.t*10+7)%14));
+
+  drawArms(stations.arms);
+  drawLegs(stations.legs);
+  drawCore(stations.core);
+
+  meter(stations.arms.x, GYM_TOP+40, stations.arms.w, game.arms, partCol(game.arms));
+  meter(stations.legs.x, GYM_TOP+40, stations.legs.w, game.legs, partCol(game.legs));
+  meter(stations.core.x, GYM_TOP+40, stations.core.w, game.core, partCol(game.core));
+}
+const partCol = v => v<25 ? '#e84a4a' : v<55 ? '#e8a04a' : '#5ac86a';
+
+function drawArms(s){
+  ctx.fillStyle = '#28303a'; rr(s.x+10, s.y+14, s.w-20, s.h-30, 6); ctx.fill();
+  ctx.fillStyle = '#1e2630'; rr(s.x+10, s.y+14, s.w-20, 6, 3); ctx.fill();
+  for (let i=0;i<3;i++){
+    const dy = s.y+30+i*26;
+    ctx.fillStyle = '#555'; ctx.fillRect(s.x+30, dy, s.w-60, 4);
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(s.x+30, dy+2, 9-i*2, 0, 7); ctx.arc(s.x+s.w-30, dy+2, 9-i*2, 0, 7); ctx.fill();
+    ctx.fillStyle = '#444';
+    ctx.beginPath(); ctx.arc(s.x+28, dy, 2.5-i*.5, 0, 7); ctx.arc(s.x+s.w-32, dy, 2.5-i*.5, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle = '#e8d9b8'; rr(s.x+s.w-26, s.y+18, 18, 24, 2); ctx.fill();
+  ctx.strokeStyle = '#c4584a'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(s.x+s.w-22, s.y+36); ctx.quadraticCurveTo(s.x+s.w-20, s.y+24, s.x+s.w-12, s.y+26); ctx.stroke();
+}
+function drawLegs(s){
+  ctx.fillStyle = '#28303a';
+  ctx.beginPath(); ctx.moveTo(s.x+10, s.y+s.h-20); ctx.lineTo(s.x+s.w-30, s.y+s.h-20);
+  ctx.lineTo(s.x+s.w-40, s.y+s.h-34); ctx.lineTo(s.x+20, s.y+s.h-34); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#4e5c6c'; ctx.lineWidth = 2;
+  for (let i=0;i<4;i++){
+    const off = ((game.t*60) % 28) + i*28;
+    if (off < s.w-58){ ctx.beginPath(); ctx.moveTo(s.x+22+off, s.y+s.h-32); ctx.lineTo(s.x+18+off, s.y+s.h-22); ctx.stroke(); }
+  }
+  ctx.fillStyle = '#28303a'; rr(s.x+s.w-44, s.y+18, 8, s.h-50, 3); ctx.fill();
+  ctx.fillStyle = '#1a2028'; rr(s.x+s.w-58, s.y+10, 36, 16, 3); ctx.fill();
+  ctx.fillStyle = '#5ac86a'; ctx.font='9px monospace'; ctx.textAlign='center';
+  ctx.fillText(Math.floor(game.legs)+'%', s.x+s.w-40, s.y+21);
+  ctx.fillStyle = '#555'; ctx.fillRect(s.x+8, s.y+26, 4, s.h-46); ctx.fillRect(s.x+34, s.y+26, 4, s.h-46);
+  ctx.fillStyle = '#888'; ctx.fillRect(s.x+2, s.y+34, 42, 4);
+  ctx.fillStyle = '#c4584a';
+  ctx.beginPath(); ctx.arc(s.x+6, s.y+36, 8, 0, 7); ctx.arc(s.x+40, s.y+36, 8, 0, 7); ctx.fill();
+  ctx.fillStyle = '#a8443a';
+  ctx.beginPath(); ctx.arc(s.x+6, s.y+36, 3, 0, 7); ctx.arc(s.x+40, s.y+36, 3, 0, 7); ctx.fill();
+}
+function drawCore(s){
+  ctx.fillStyle = '#6a4a8a'; rr(s.x+10, s.y+s.h-36, s.w-20, 24, 8); ctx.fill();
+  ctx.strokeStyle = '#8a6aaa'; ctx.lineWidth=2; rr(s.x+16, s.y+s.h-32, s.w-32, 16, 6); ctx.stroke();
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.arc(s.x+30, s.y+34, 13, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#222'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(s.x+30, s.y+18, 9, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle = '#3a3a3a'; ctx.beginPath(); ctx.arc(s.x+26, s.y+30, 3.5, 0, 7); ctx.fill();
+  ctx.fillStyle = '#c4584a';
+  ctx.beginPath(); ctx.arc(s.x+s.w-36, s.y+32, 15, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#e8d9b8'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(s.x+s.w-50, s.y+30); ctx.quadraticCurveTo(s.x+s.w-36, s.y+38, s.x+s.w-22, s.y+30); ctx.stroke();
+  ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(s.x+s.w/2, s.y+40, 9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(s.x+s.w/2, s.y+40, 4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#888'; ctx.fillRect(s.x+s.w/2-16, s.y+38, 32, 4);
+}
+
+function meter(x, y, w, v, col){
+  ctx.fillStyle = '#00000045'; rr(x, y, w, 9, 4); ctx.fill();
+  ctx.fillStyle = col; rr(x+1, y+1, Math.max(0,(w-2)*Math.min(v,100)/100), 7, 3); ctx.fill();
+}
+
+// ---- trash can (for ruined batches) ----
+function drawTrash(s){
+  const x = s.x, y = s.y, w = s.w, h = s.h;
+  // can body — tapered, with vertical ridges
+  ctx.fillStyle = '#6b7682';
+  ctx.beginPath(); ctx.moveTo(x+4, y+12); ctx.lineTo(x+w-4, y+12); ctx.lineTo(x+w-8, y+h); ctx.lineTo(x+8, y+h); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#5a636e'; ctx.lineWidth = 2;
+  for (let i=1;i<4;i++){ const rx = x+4 + i*(w-8)/4; ctx.beginPath(); ctx.moveTo(rx, y+14); ctx.lineTo(rx-2*(i-2), y+h-2); ctx.stroke(); }
+  // rim band
+  ctx.fillStyle = '#7e8a96'; rr(x+2, y+8, w-4, 7, 2); ctx.fill();
+  // lid, tilted ajar
+  ctx.fillStyle = '#8a96a2';
+  ctx.save(); ctx.translate(x+w/2, y+8); ctx.rotate(-.12);
+  rr(-w/2-1, -7, w+2, 8, 3); ctx.fill();
+  ctx.fillStyle = '#6b7682'; rr(-5, -13, 10, 7, 3); ctx.fill();   // handle
+  ctx.restore();
+  // a little stink + a banana-peel poking out (it IS a trash can)
+  ctx.strokeStyle = 'rgba(150,170,120,.5)'; ctx.lineWidth = 2;
+  for (let i=0;i<2;i++){ const ph=(game.t*1.2+i)%2, sx=x+16+i*20, sy=y+4-ph*16;
+    ctx.globalAlpha=1-ph/2; ctx.beginPath(); ctx.moveTo(sx,sy+10); ctx.quadraticCurveTo(sx+4,sy+5,sx,sy); ctx.stroke(); ctx.globalAlpha=1; }
+  ctx.fillStyle = '#d9c24a'; ctx.beginPath(); ctx.ellipse(x+w-12, y+12, 4, 9, .5, 0, 7); ctx.fill();
+}
+
+// ---- the grey cat ----
+function drawCat(){
+  const cat = game.cat; if (!cat) return;
+  const petted = zaddy.petting;
+  const moving = cat.pauseT <= 0 && !petted;
+  const bob = moving ? Math.sin(cat.walk)*1.5 : 0;
+  const grey = '#9a9aa2', greyD = '#76767e';
+  ctx.save();
+  ctx.translate(cat.x, cat.y + bob);
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.beginPath(); ctx.ellipse(0, 13, 19, 4, 0, 0, 7); ctx.fill();
+  ctx.scale(cat.face, 1);
+
+  // tail — always swaying
+  const tw = Math.sin(game.t*3);
+  ctx.strokeStyle = grey; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-15, 6); ctx.quadraticCurveTo(-30, 2+tw*4, -26, -14+tw*5); ctx.stroke();
+  ctx.strokeStyle = greyD; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(-27, -8+tw*5); ctx.lineTo(-26, -14+tw*5); ctx.stroke();
+
+  // legs
+  ctx.fillStyle = grey;
+  if (moving){
+    const ls = Math.sin(cat.walk)*3;
+    rr(-7, 6, 5, 9+ls, 2); ctx.fill();
+    rr(7, 6, 5, 9-ls, 2); ctx.fill();
+  } else {
+    rr(3, 5, 5, 11, 2); ctx.fill();    // sitting: front paws tucked under
+    rr(9, 5, 5, 11, 2); ctx.fill();
+  }
+
+  // body
+  ctx.fillStyle = grey;
+  if (moving){ ctx.beginPath(); ctx.ellipse(-1, 3, 17, 10, 0, 0, 7); ctx.fill(); }
+  else { ctx.beginPath(); ctx.ellipse(-2, 3, 13, 12, 0, 0, 7); ctx.fill(); }
+  // tabby stripes
+  ctx.strokeStyle = greyD; ctx.lineWidth = 2;
+  for (let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(i*7-2, -5); ctx.lineTo(i*7, -9); ctx.stroke(); }
+
+  // head
+  const hx = moving ? 13 : 9, hyc = moving ? -5 : -11;
+  ctx.fillStyle = grey;
+  ctx.beginPath(); ctx.arc(hx, hyc, 9, 0, 7); ctx.fill();
+  // ears
+  ctx.beginPath(); ctx.moveTo(hx-8, hyc-5); ctx.lineTo(hx-10, hyc-14); ctx.lineTo(hx-2, hyc-9); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(hx+8, hyc-5); ctx.lineTo(hx+10, hyc-14); ctx.lineTo(hx+2, hyc-9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d0a0a8';
+  ctx.beginPath(); ctx.moveTo(hx-7, hyc-6); ctx.lineTo(hx-8, hyc-12); ctx.lineTo(hx-4, hyc-9); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(hx+7, hyc-6); ctx.lineTo(hx+8, hyc-12); ctx.lineTo(hx+4, hyc-9); ctx.closePath(); ctx.fill();
+  // eyes — content ^ ^ when petted/resting, open when walking
+  if (petted || !moving){
+    ctx.strokeStyle = '#2a2a30'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(hx+1, hyc-1); ctx.quadraticCurveTo(hx+3, hyc-3.5, hx+5, hyc-1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx+8, hyc-1); ctx.quadraticCurveTo(hx+10, hyc-3.5, hx+12, hyc-1); ctx.stroke();
+  } else {
+    ctx.fillStyle = '#2a2a30';
+    ctx.beginPath(); ctx.arc(hx+4, hyc-1, 1.7, 0, 7); ctx.arc(hx+10, hyc-1, 1.7, 0, 7); ctx.fill();
+  }
+  // nose + whiskers
+  ctx.fillStyle = '#d0808a';
+  ctx.beginPath(); ctx.moveTo(hx+5, hyc+3); ctx.lineTo(hx+9, hyc+3); ctx.lineTo(hx+7, hyc+5); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#ffffffbb'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(hx+7, hyc+4); ctx.lineTo(hx+18, hyc+2); ctx.moveTo(hx+7, hyc+5); ctx.lineTo(hx+18, hyc+7); ctx.stroke();
+  ctx.restore();
+
+  // purring hearts when petted
+  if (petted){
+    ctx.fillStyle = '#e87ab0'; ctx.font = '12px Trebuchet MS'; ctx.textAlign = 'center';
+    ctx.fillText('♪', cat.x + 16, cat.y - 16 - (game.t*22 % 12));
+  }
+}
+
+function drawHUD(){
+  ctx.textAlign = 'left'; ctx.font = 'bold 12px Trebuchet MS';
+  hudBar(14, 12, 'STARTER 🫙', game.starter, game.starter<25?'#d33':'#8b5');
+  hudBar(14, 32, 'ARMS 💪', game.arms, partCol(game.arms));
+  hudBar(14, 52, 'LEGS 🦵', game.legs, partCol(game.legs));
+  hudBar(14, 72, 'CORE 🔥', game.core, partCol(game.core));
+  hudBar(14, 92, 'JOY 😻', game.joy, game.joy<25?'#d33':game.joy<55?'#e8a04a':'#e87ab0');
+  ctx.textAlign='right'; ctx.fillStyle='#3a2c1c'; ctx.font = 'bold 13px Trebuchet MS';
+  ctx.fillText('LOAVES: ' + '🍞'.repeat(game.loaves) + '·'.repeat(game.goal-game.loaves), W-16, 24);
+
+  // multi-batch status banner
+  const d = game.doughs, parts = [];
+  if (game.starterFeed) parts.push('FEED '+Math.floor(game.starterFeed.p)+'%');
+  else if (game.starterReady) parts.push('SCOOP READY!');
+  if (d.mixer)  parts.push(d.mixer.ready  ? 'MIXED✓'  : 'MIX '+Math.floor(d.mixer.p)+'%');
+  if (d.knead)  parts.push(d.knead.ready  ? 'KNEADED✓': 'KNEAD '+Math.floor(d.knead.p)+'%');
+  if (d.proof)  parts.push(d.proof.ready  ? 'PROOFED✓': 'PROOF '+Math.floor(d.proof.p)+'%');
+  if (d.oven)   parts.push(d.oven.p >= 75 ? (d.oven.p > 95 ? 'PULL NOW!!' : 'PULL IT!') : 'BAKE '+Math.floor(d.oven.p/75*100)+'%');
+  if (game.carry === 'trash') parts.push('🗑️ TO THE TRASH!');
+  else if (game.carry) parts.push('✋ CARRYING');
+  const label = parts.length ? parts.join('  ·  ') : 'SCOOP A BATCH AT THE BOWL';
+  ctx.font = 'bold 13px Trebuchet MS';
+  const bw = Math.max(260, ctx.measureText(label).width + 36);
+  ctx.fillStyle = '#3a2c1c'; rr(W/2-bw/2, 8, bw, 24, 8); ctx.fill();
+  ctx.textAlign='center';
+  ctx.fillStyle = '#ffd966';
+  ctx.fillText('▶ ' + label, W/2, 25);
+
+  if (game.msgT > 0){
+    ctx.font = 'bold 15px Trebuchet MS';
+    const tw = ctx.measureText(game.msg).width + 28;
+    ctx.fillStyle = 'rgba(30,22,14,.85)'; rr(W/2-tw/2, H-40, tw, 30, 9); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(game.msg, W/2, H-20);
+  }
+}
+function hudBar(x, y, label, v, col){
+  ctx.textAlign='left'; ctx.fillStyle = '#3a2c1c'; ctx.fillText(label, x, y+11);
+  ctx.fillStyle='#00000045'; rr(x+78, y, 120, 13, 6); ctx.fill();
+  ctx.fillStyle=col; rr(x+79, y+1, 118*Math.max(0,Math.min(v,100))/100, 11, 5); ctx.fill();
+}
+
+function drawEnd(){
+  ctx.fillStyle = 'rgba(20,12,6,.82)'; ctx.fillRect(0,0,W,H);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = game.win ? '#ffd966' : '#e87060';
+  ctx.font = 'bold 40px Trebuchet MS';
+  ctx.fillText(game.win ? '🍞 MASTER BAKER ZADDY 🍞' : 'GAME OVER', W/2, H/2 - 40);
+  ctx.fillStyle = '#f3e7d3'; ctx.font = '18px Trebuchet MS';
+  ctx.fillText(game.win ? `${game.goal} perfect loaves, and he can still see his feet. Legend.` : game.reason, W/2, H/2 + 4);
+  ctx.font = 'bold 16px Trebuchet MS'; ctx.fillStyle = '#ffd966';
+  ctx.fillText('Press R to rise again', W/2, H/2 + 48);
+}
+
+reset();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
